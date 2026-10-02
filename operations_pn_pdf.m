@@ -1,7 +1,3 @@
-% Example-01: A Simple Ordinary Petri Net
-% PDF: ’simple_pn_pdf.m
-% 
-% ’
 % %%%%%%%   Operasjonell avdeling
 % Input buffer
 % Cleaning buffer

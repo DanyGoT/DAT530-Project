@@ -1,13 +1,3 @@
-% Example-01: A Simple Ordinary Petri Net 
-% the main simulation file (MSF) to run simulation 
-
-clear all; clc; 
-global global_info
-global_info.MAX_LOOP = 15;
-
-pns = pnstruct('operations_pn_pdf');
-
-
 % Plan:
 % %%%% Initial fase
 % Lage en forenklet modell, med hver av modulene for seg selv.
@@ -79,10 +69,17 @@ pns = pnstruct('operations_pn_pdf');
 % | 
 % 
 
+clear all; clc;
+global global_info
+global_info.MAX_LOOP = 15;
 
-dyn.m0 = {'pOInput',4};
+pns = pnstruct({'operations_pn_pdf', 'logistics_pn_pdf', 'imc_lo_pdf'});
+
+dyn.m0 = {'pIMC_LO',4};
 pni = initialdynamics(pns, dyn); 
 
-Sim_Results = gpensim(pni);                                            % perform simulation runs
-prnss(Sim_Results);                                                    % print the simulation results
-plotp(Sim_Results, {'pOInput', 'pOCleaning', 'pOInspection', 'pOOutput'}); % plot the results
+Sim_Results = gpensim(pni); % perform simulation runs
+prnss(Sim_Results);         % print the simulation results
+plotp(Sim_Results, {        % plot the results
+    'pIMC_LO', 'pOCleaning', 'pOInspection',
+});

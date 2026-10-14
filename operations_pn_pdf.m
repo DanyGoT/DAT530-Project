@@ -11,12 +11,12 @@
 function [pns] = operations_pn_pdf()
 
 pns.PN_name = 'Operation Petri Net model';
-pns.set_of_Ps = {'pInput', 'pCleaning', 'pInspection', 'pOutput'};
-pns.set_of_Ts = {'tMoveToClean', 'tClean', 'tMoveToInspection', 'tInspect', 'tMoveToOutput'}; 
+pns.set_of_Ps = {'pOInput', 'pOCleaning', 'pOInspection', 'pOOutput'};
+pns.set_of_Ts = {'tOI', 'tOMoveToClean', 'tOClean', 'tOMoveToInspection', 'tOInspect', 'tOMoveToOutput'};
 pns.set_of_As = { ...
-  'pInput',       'tMoveToClean',       1, 'tMoveToClean',      'pCleaning',     1 ... % Input to cleaning
-  'pCleaning',    'tClean',             1, 'tClean',            'pCleaning',     1 ... % Cleaning
-  'pCleaning',    'tMoveToInspection',  1, 'tMoveToInspection', 'pInspection',   1 ... % Cleaning to inspection
-  'pInspection',  'tInspect',           1, 'tInspect',          'pInspection',   1 ... % Inspection
-  'pInspection',  'tMoveToOutput',      1, 'tMoveToOutput',     'pOutput',       1 ... % Inspection to output
+  'pOInput',       'tOMoveToClean',       1, 'tOMoveToClean',      'pOCleaning',     1 ... % Input to cleaning
+  'pOCleaning',    'tOClean',             1, 'tOClean',            'pOCleaning',     1 ... % Cleaning
+  'pOCleaning',    'tOMoveToInspection',  1, 'tOMoveToInspection', 'pOInspection',   1 ... % Cleaning to inspection
+  'pOInspection',  'tOInspect',           1, 'tOInspect',          'pOInspection',   1 ... % Inspection
+  'pOInspection',  'tOMoveToOutput',      1, 'tOMoveToOutput',     'pOOutput',       1 ... % Inspection to output
  };    

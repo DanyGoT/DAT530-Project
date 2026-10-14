@@ -43,21 +43,19 @@ function [pns] = it_pn_pdf()
 
 pns.PN_name = 'IT Service Petri Net model';
 
-pns.set_of_Ps = {'pNewOrders', 'pOngoingOrders', 'pCompletedOrders', ...
-  'pReceives', 'pInspections', 'pDeliveries', 'pInvoices'};
+pns.set_of_Ps = {'pINewOrders', 'pIOngoingOrders', 'pICompletedOrders', ...
+  'pIReceives', 'pIInspections', 'pIDeliveries', 'pIInvoices'};
 
-pns.set_of_Ts = {'tProcessOrder', 'tProcessReceive', 'tProcessDelivery', ...
-  'tReceiveFromOrder', 'tInspectionFromOrder', 'tDeliveryFromOrder', 'tInvoiceFromOrder'};
-
-gp
+pns.set_of_Ts = {'tIProcessOrder', 'tIProcessReceive', 'tIProcessDelivery', ...
+  'tIReceiveFromOrder', 'tIInspectionFromOrder', 'tIDeliveryFromOrder', 'tIInvoiceFromOrder'};
 
 pns.set_of_As = { ...
-  'pNewOrders',     'tReceiveFromOrder',    1, 'tReceiveFromOrder',    'pOngoingOrders',   1, ... % Receive from order
-  'pNewOrders',     'tReceiveFromOrder',    1, 'tReceiveFromOrder',    'pReceives',        1, ... % 
-  'pOngoingOrders', 'tInspectionFromOrder', 1, 'tInspectionFromOrder', 'pOngoingOrders',   1, ... % Inspection from order
-  'pOngoingOrders', 'tInspectionFromOrder', 1, 'tInspectionFromOrder', 'pInspections',     1, ... %
-  'pOngoingOrders', 'tDeliveryFromOrder',   1, 'tDeliveryFromOrder',   'pOngoingOrders',   1, ... % Delivery from order
-  'pOngoingOrders', 'tDeliveryFromOrder',   1, 'tDeliveryFromOrder',   'pDeliveries',      1, ... %
-  'pOngoingOrders', 'tInvoiceFromOrder',    1, 'tInvoiceFromOrder',    'pCompletedOrders', 1, ... % Invoice from order
-  'pOngoingOrders', 'tInvoiceFromOrder',    1, 'tInvoiceFromOrder',    'pInvoices',        1 ... %
+  'pINewOrders',     'tIReceiveFromOrder',    1, 'tIReceiveFromOrder',    'pIOngoingOrders',   1, ... % Receive from order
+  'pINewOrders',     'tIReceiveFromOrder',    1, 'tIReceiveFromOrder',    'pIReceives',        1, ... % 
+  'pIOngoingOrders', 'tIInspectionFromOrder', 1, 'tIInspectionFromOrder', 'pIOngoingOrders',   1, ... % Inspection from order
+  'pIOngoingOrders', 'tIInspectionFromOrder', 1, 'tIInspectionFromOrder', 'pIInspections',     1, ... %
+  'pIOngoingOrders', 'tIDeliveryFromOrder',   1, 'tIDeliveryFromOrder',   'pIOngoingOrders',   1, ... % Delivery from order
+  'pIOngoingOrders', 'tIDeliveryFromOrder',   1, 'tIDeliveryFromOrder',   'pIDeliveries',      1, ... %
+  'pIOngoingOrders', 'tIInvoiceFromOrder',    1, 'tIInvoiceFromOrder',    'pICompletedOrders', 1, ... % Invoice from order
+  'pIOngoingOrders', 'tIInvoiceFromOrder',    1, 'tIInvoiceFromOrder',    'pIInvoices',        1 ... %
 };

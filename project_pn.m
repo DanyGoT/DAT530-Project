@@ -80,9 +80,9 @@ pns = pnstruct('operations_pn_pdf');
 % 
 
 
-dyn.m0 = {'pInput',4};
+dyn.m0 = {'pOInput',4};
 pni = initialdynamics(pns, dyn); 
 
 Sim_Results = gpensim(pni);                                            % perform simulation runs
 prnss(Sim_Results);                                                    % print the simulation results
-plotp(Sim_Results, {'pInput', 'pCleaning', 'pInspection', 'pOutput'}); % plot the results
+plotp(Sim_Results, {'pOInput', 'pOCleaning', 'pOInspection', 'pOOutput'}); % plot the results

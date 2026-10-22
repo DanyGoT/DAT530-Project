@@ -43,20 +43,19 @@ function [pns] = it_pn_pdf()
 
 pns.PN_name = 'IT Service Petri Net model';
 
-pns.set_of_Ps = {'pINewOrders', 'pIOngoingOrders', 'pICompletedOrders', ...
-  'pIReceives', 'pIInspections', 'pIDeliveries', 'pIInvoices'};
+pns.set_of_Ps = {IT.pNewOrders, IT.pOngoingOrders, IT.pCompletedOrders, ...
+  IT.pReceives, IT.pInspections, IT.pDeliveries, IT.pInvoices};
 
-pns.set_of_Ts = {'tIProcessOrder', 'tIProcessReceive', 'tIProcessDelivery', ...
-  'tIReceiveFromOrder', 'tIInspectionFromOrder', 'tIDeliveryFromOrder', 'tIInvoiceFromOrder'};
+pns.set_of_Ts = {IT.tProcessOrder, IT.tProcessReceive, IT.tProcessDelivery, ...
+  IT.tReceiveFromOrder, IT.tInspectionFromOrder, IT.tDeliveryFromOrder, IT.tInvoiceFromOrder};
 
 pns.set_of_As = { ...
-  'pINewOrders',     'tIReceiveFromOrder',    1, 'tIReceiveFromOrder',    'pIOngoingOrders',   1, ... % Receive from order
-  'pINewOrders',     'tIReceiveFromOrder',    1, 'tIReceiveFromOrder',    'pIReceives',        1, ... % 
-  'pIOngoingOrders', 'tIInspectionFromOrder', 1, 'tIInspectionFromOrder', 'pIOngoingOrders',   1, ... % Inspection from order
-  'pIOngoingOrders', 'tIInspectionFromOrder', 1, 'tIInspectionFromOrder', 'pIInspections',     1, ... %
-  'pIOngoingOrders', 'tIDeliveryFromOrder',   1, 'tIDeliveryFromOrder',   'pIOngoingOrders',   1, ... % Delivery from order
-  'pIOngoingOrders', 'tIDeliveryFromOrder',   1, 'tIDeliveryFromOrder',   'pIDeliveries',      1, ... %
-  'pIOngoingOrders', 'tIInvoiceFromOrder',    1, 'tIInvoiceFromOrder',    'pICompletedOrders', 1, ... % Invoice from order
-  'pIOngoingOrders', 'tIInvoiceFromOrder',    1, 'tIInvoiceFromOrder',    'pIInvoices',        1 ... %
+  IT.pNewOrders,     IT.tReceiveFromOrder,    1, IT.tReceiveFromOrder,    IT.pOngoingOrders,   1, ... % Receive from order
+  IT.pNewOrders,     IT.tReceiveFromOrder,    1, IT.tReceiveFromOrder,    IT.pReceives,        1, ... %
+  IT.pOngoingOrders, IT.tInspectionFromOrder, 1, IT.tInspectionFromOrder, IT.pOngoingOrders,   1, ... % Inspection from order
+  IT.pOngoingOrders, IT.tInspectionFromOrder, 1, IT.tInspectionFromOrder, IT.pInspections,     1, ... %
+  IT.pOngoingOrders, IT.tDeliveryFromOrder,   1, IT.tDeliveryFromOrder,   IT.pOngoingOrders,   1, ... % Delivery from order
+  IT.pOngoingOrders, IT.tDeliveryFromOrder,   1, IT.tDeliveryFromOrder,   IT.pDeliveries,      1, ... %
+  IT.pOngoingOrders, IT.tInvoiceFromOrder,    1, IT.tInvoiceFromOrder,    IT.pCompletedOrders, 1, ... % Invoice from order
+  IT.pOngoingOrders, IT.tInvoiceFromOrder,    1, IT.tInvoiceFromOrder,    IT.pInvoices,        1 ... %
 };
-

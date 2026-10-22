@@ -70,16 +70,4 @@
 % 
 
 clear all; clc;
-global global_info
-global_info.MAX_LOOP = 15;
-
-pns = pnstruct({'operations_pn_pdf', 'logistics_pn_pdf', 'imc_lo_pdf'});
-
-dyn.m0 = {'pIMC_LO',4};
-pni = initialdynamics(pns, dyn); 
-
-Sim_Results = gpensim(pni); % perform simulation runs
-prnss(Sim_Results);         % print the simulation results
-plotp(Sim_Results, {        % plot the results
-    'pIMC_LO', 'pOCleaning', 'pOInspection',
-});
+[Sim_Results, Order_Summary, Inventory_Summary, Resource_Summary] = run_pipe_simulation();

@@ -10,21 +10,14 @@
 
 function [pns] = operations_pn_pdf()
 
-pns.PN_name = 'Operation Petri Net model';
-pns.set_of_Ps = {
-    'pOCleaning', ...
-    'pOInspection' ...
-};
-pns.set_of_Ts = {
-    'tOCleaningInput', 'tOClean', ...
-    'tOMoveToInspection', 'tOInspect', 'tOInspectionOutput' ...
-};
-pns.set_of_As = { ...
-  'tOCleaningInput', 'pOCleaning',         1,                                         ... % Input to cleaning
-  'pOCleaning',      'tOClean',            1, 'tOClean',            'pOCleaning',   1 ... % Cleaning
-  'pOCleaning',      'tOMoveToInspection', 1, 'tOMoveToInspection', 'pOInspection', 1 ... % Cleaning to inspection
-  'pOInspection',    'tOInspect',          1, 'tOInspect',          'pOInspection', 1 ... % Inspection
-  'pOInspection',    'tOInspectionOutput', 1
- };
+net = Ops.net;
 
-pns.set_of_Ports = {'tOCleaningInput', 'tOInspectionOutput'};
+pns.PN_name = 'Operation Petri Net model';
+pns.set_of_Ps = [{Ops.pDone}, net.Ps];
+pns.set_of_Ts = [{Ops.tInput, Ops.tOutput}, net.Ts];
+pns.set_of_As = [{ ...
+  Ops.tInput, net.p.Clean, 1 ...  % Input port -> cleaning buffer
+  Ops.pDone,  Ops.tOutput, 1 ...  % Done -> output port
+}, net.As];                       % Clean and Inspect steps
+
+pns.set_of_Ports = {Ops.tInput, Ops.tOutput};

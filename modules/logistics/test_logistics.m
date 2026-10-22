@@ -10,13 +10,13 @@ pns = pnstruct('logistics_pn_pdf');
 distYard1 = 10;
 distYard2 = 25;
 
-dyn.m0 = {'pLYard1',2, 'pLYard2',2, 'pLTruckAvailable',1, ...
-          'pLForkliftYard1',1, 'pLForkliftYard2',1, 'pLForkliftWorkshop',1};
-dyn.ft = {'tLDriveToYard1',distYard1, 'tLDriveFromYard1',distYard1, ...
-          'tLDriveToYard2',distYard2, 'tLDriveFromYard2',distYard2, ...
-          'tLLoad1',2, 'tLLoad2',2, 'tLUnload',2};
+dyn.m0 = {Lgs.pYard1,2, Lgs.pYard2,2, Lgs.pTruckAvailable,1, ...
+          Lgs.pForkliftYard1,1, Lgs.pForkliftYard2,1, Lgs.pForkliftWorkshop,1};
+dyn.ft = {Lgs.tDriveToYard1,distYard1, Lgs.tDriveFromYard1,distYard1, ...
+          Lgs.tDriveToYard2,distYard2, Lgs.tDriveFromYard2,distYard2, ...
+          Lgs.tLoad1,2, Lgs.tLoad2,2, Lgs.tUnload,2};
 pni = initialdynamics(pns, dyn);
 
 Sim_Results = gpensim(pni);
 prnss(Sim_Results);
-plotp(Sim_Results, {'pLYard1', 'pLYard2', 'pLOutput'});
+plotp(Sim_Results, {Lgs.pYard1, Lgs.pYard2, Lgs.pOutput});

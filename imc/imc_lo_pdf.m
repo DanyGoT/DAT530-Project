@@ -8,9 +8,9 @@
 function [pns] = imc_lo_pdf()
 
 pns.PN_name = 'IMC_LO';
-pns.set_of_Ps = {'pIMC_LO'};
+pns.set_of_Ps = {ImcLO.pBuffer};
 pns.set_of_Ts = {};
 pns.set_of_As = { ...
-  'tLUnload', 'pIMC_LO',         1 ... % Logistics output port -> buffer
-  'pIMC_LO',  'tOCleaningInput', 1 ... % buffer -> Operations input port
+  Lgs.tUnload,   ImcLO.pBuffer, 1 ... % Logistics output port -> buffer
+  ImcLO.pBuffer, Ops.tInput,    1 ... % buffer -> Operations input port
  };

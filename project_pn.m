@@ -70,6 +70,7 @@
 % 
 
 clear all; clc;
+run(fullfile(fileparts(mfilename('fullpath')), 'setup.m'));
 global global_info
 global_info.MAX_LOOP = 15;
 

@@ -1,4 +1,5 @@
 clear all; clc;
+run(fullfile(fileparts(mfilename('fullpath')), '..', '..', 'setup.m'));
 
 pns = pnstruct('operations_pn_pdf');
 

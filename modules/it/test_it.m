@@ -2,6 +2,7 @@
 % %%%%%%%   IT avdeling test
 
 clear all; clc;
+run(fullfile(fileparts(mfilename('fullpath')), '..', '..', 'setup.m'));
 
 pns = pnstruct('it_pn_pdf');
 

@@ -16,7 +16,8 @@ t = transition.name;
 fire = 0;
 
 % The yard and the halls work during the shift; arrivals, tickets and workshops don't stop.
-if not(ismember(t, {'tALong', 'tAShort', 'tABypass', 'tDTicket', 'tRMach', 'tRHb'})) ...
+if not(ismember(t, {'tALong', 'tAShort', 'tABypass', 'tDTicket', ...
+                    'tRMachHall', 'tRMachReady', 'tRHbHall', 'tRHbReady'})) ...
         && not(in_shift(P))
     return
 end
@@ -57,17 +58,22 @@ switch t
     case 'tIOk'
         [fire, transition] = leave(transition, 'ok');
     case 'tIMach'
-        [fire, transition] = leave(transition, 'mach');
+        [fire, transition] = to_workshop(transition, 'mach', 1);
     case 'tIHb'
-        [fire, transition] = leave(transition, 'hb');
+        [fire, transition] = to_workshop(transition, 'hb', 2);
     case 'tIScrap'
         [fire, transition] = leave(transition, 'scrapped');
 
-    % Back from the workshop when the repair time is up; ok now.
-    case 'tRMach'
-        [fire, transition] = back(transition, 'pRMach', P.repair_days(1));
-    case 'tRHb'
-        [fire, transition] = back(transition, 'pRHb', P.repair_days(2));
+    % Back from the workshop when the repair time is up: some joints go
+    % through the hall again, the rest straight to rig-ready stock.
+    case 'tRMachHall'
+        [fire, transition] = back(transition, 1, true);
+    case 'tRMachReady'
+        [fire, transition] = back(transition, 1, false);
+    case 'tRHbHall'
+        [fire, transition] = back(transition, 2, true);
+    case 'tRHbReady'
+        [fire, transition] = back(transition, 2, false);
 
     otherwise                       % a step in the hall, or its skip
         [fire, transition] = step(transition, global_info);
@@ -159,14 +165,35 @@ function yes = next_is(place, color)
 yes = id > 0 && has(c, color);
 
 
-function [fire, transition] = back(transition, place, days)
-% The oldest joint at a workshop comes back once its repair time is over.
-fire = 0;
-p = get_place(place);
-if isempty(p.token_bank), return, end
-tok = p.token_bank(1);
-if tok.creation_time + days*1440 > current_time(), return, end
-[fire, transition] = select(transition, tok.tokID, {'ok', 'repaired'});
+function [fire, transition] = to_workshop(transition, color, w)
+% Leave the hall for workshop w (1 machining, 2 hardbanding). Joints at the
+% workshops are colourless, so global_info.workshop{w} keeps one row per
+% joint: when its order's repair is done, and whether it is inspected again.
+% GPenSIM fires a transition as soon as its pre-processor says yes, so the
+% row can be added here.
+global global_info
+[id, c] = find_token('pIDone', @(tok) has(tok.color, color));
+[fire, transition] = select(transition, id, {});
+if not(fire), return, end
+order = sscanf(c{strncmp(c, 'order', 5)}, 'order%d');
+done = current_time() + global_info.repair(order, w)*1440;
+again = rand < global_info.P.p_reinspect(w);
+global_info.workshop{w}(end+1, :) = [done, again];
+
+
+function [fire, transition] = back(transition, w, hall)
+% A joint whose repair is done leaves workshop w, to the hall or to stock.
+% A joint that goes through the hall again has been fixed: it passes.
+global global_info
+q = global_info.workshop{w};
+i = find(q(:, 1) <= current_time() & q(:, 2) == hall, 1);
+fire = not(isempty(i));
+if not(fire), return, end
+global_info.workshop{w}(i, :) = [];
+if hall
+    transition.new_color = {'ok', 'repaired'};
+    transition.override = 1;
+end
 
 
 function yes = has(colors, color)

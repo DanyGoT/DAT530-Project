@@ -5,13 +5,15 @@ function [] = model_init(P)
 global global_info
 rng(P.seed);
 
-pipes = gen_pipes(P);
+[pipes, repair] = gen_pipes(P);
 [S, step_of] = step_list(P);
 global_info.P = P;
 global_info.S = S;
 global_info.step_of = step_of;
 global_info.pipes = pipes;
 global_info.hall = pipes(strcmp({pipes.route}, 'hall'));   % in arrival order
+global_info.repair = repair;                % days per order [machining hardbanding]
+global_info.workshop = {zeros(0, 2), zeros(0, 2)};  % [done again] per joint at each workshop
 global_info.demand = gen_demand(P);
 global_info.next_pipe = 1;
 global_info.next_hall = 1;

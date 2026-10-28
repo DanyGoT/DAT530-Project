@@ -16,7 +16,7 @@ for k = 1:n
                           'UniformOutput', false);
     S(k).tskip = '';
     if skip, S(k).tskip = ['tI', name, 'Skip']; end
-    S(k).ft    = sec/60;
+    S(k).ft    = sec*P.pace/60;
     S(k).pool  = levels(level+1:end);      % this level or higher
     S(k).finds = finds;
     S(k).skip  = skip;

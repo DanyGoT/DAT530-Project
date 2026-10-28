@@ -7,6 +7,7 @@ clear all; clc;
 global global_info
 
 P = params();
+P.seed = 4;                     % a seed with arrivals from Monday
 P.days = 2;
 model_init(P);
 pns = pnstruct({'arrival_pdf', 'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
@@ -19,11 +20,13 @@ on_floor = sum(cellfun(@ntokens, {S.place})) + ntokens('pIDone');
 assert(on_floor + ntokens('pISpace') == P.hall_space, 'hall space not conserved');
 
 washed = timesfired('tWLong') + timesfired('tWShort');
+assert(washed > 0, 'nothing was washed');
 left = sum(cellfun(@timesfired, {'tIOk', 'tIMach', 'tIHb', 'tIScrap'}));
 assert(washed == on_floor + left, 'joints lost in the hall');
 
 for p = {'pYLong', 'pYShort', 'pYReady', 'pYScrap', 'pISpace'}
     bank = get_place(p{1}).token_bank;
+    if isempty(bank), continue, end
     assert(all(cellfun(@isempty, {bank.color})), [p{1}, ' has coloured tokens']);
 end
 

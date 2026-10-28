@@ -5,6 +5,7 @@ clear all; clc;
 global global_info
 
 P = params();
+P.seed = 4;                     % a seed with arrivals from Monday
 P.days = 2;
 model_init(P);
 pns = pnstruct({'arrival_pdf', 'yard_pdf', 'imc_arrival_yard'});
@@ -14,6 +15,7 @@ Sim_Results = gpensim(pni);
 pipes = global_info.pipes;
 hall = strcmp({pipes.route}, 'hall');
 long = strcmp({pipes.len}, 'long');
+assert(numel(pipes) > 0, 'no joints arrived');
 assert(global_info.next_pipe - 1 == numel(pipes), 'not every joint was unloaded');
 assert(ntokens('pYReady') == P.stock + sum(not(hall)), 'bypass joints missing from stock');
 assert(ntokens('pYLong')  + timesfired('tYLong')  == sum(hall & long),     'long joints lost');

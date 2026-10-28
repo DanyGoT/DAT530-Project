@@ -69,18 +69,37 @@
 % | 
 % 
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%   Main simulation file
+%
+% Token = one joint (pipe). In the yard a joint's kind is the place it is in.
+% In the wash and the hall it carries colours: 'long'/'short', what inspection
+% will find ('ok', 'mach', 'hb' or 'scrap'), its order, and 'scrapped' once
+% inspection has found scrap. Parameters: params.m.
+
 clear all; clc;
-run(fullfile(fileparts(mfilename('fullpath')), 'setup.m'));
 global global_info
-global_info.MAX_LOOP = 15;
 
-pns = pnstruct({'operations_pn_pdf', 'logistics_pn_pdf', 'imc_lo_pdf'});
+P = params();
+% P.crew = [3 2 0 2];          % try another crew (L0-L3), as in the 2021 report
 
-dyn.m0 = {ImcLO.pBuffer,4};
-pni = initialdynamics(pns, dyn); 
+model_init(P);                  % arrivals, demand and hall steps into global_info
+pns = pnstruct({'arrival_pdf', 'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
+                'repair_pdf', 'departure_pdf', ...
+                'imc_arrival_yard', 'imc_yard_wash', 'imc_wash_inspection', ...
+                'imc_inspection_yard', 'imc_inspection_repair', 'imc_yard_departure'});
+pni = initialdynamics(pns, model_dyn(P, pns));   % marking, firing times, workers
 
-Sim_Results = gpensim(pni); % perform simulation runs
-prnss(Sim_Results);         % print the simulation results
-plotp(Sim_Results, {        % plot the results
-    ImcLO.pBuffer, Ops.net.p.Clean, Ops.net.p.Inspect, Ops.pDone
-});
+Sim_Results = gpensim(pni);
+
+out = {'tIOk', 'tIMach', 'tIHb', 'tIScrap'};
+n = cellfun(@timesfired, out);
+disp(['Joints arrived: ', int2str(global_info.next_pipe - 1), ...
+      ', inspected: ', int2str(sum(n)), ' (ok ', int2str(n(1)), ', machining ', int2str(n(2)), ...
+      ', hardbanding ', int2str(n(3)), ', scrap ', int2str(n(4)), ...
+      '), shipped: ', int2str(timesfired('tDShip'))]);
+prnschedule(Sim_Results);                                    % who worked how much
+plotp(Sim_Results, {'pYLong', 'pYShort', 'pWBuf'});          % queue in front of the hall
+plotp(Sim_Results, {'pISpace'});                             % free room on the hall floor
+plotp(Sim_Results, {'pYReady', 'pDDemand'});                 % stock and unmet demand
+plotp(Sim_Results, {'pDShipped', 'pRMach', 'pRHb', 'pYScrap'});  % where joints went

@@ -12,14 +12,17 @@
 clear all; clc;
 global global_info
 
+find_traps = false;             % true: also list the minimal traps (~10 min)
+
 P = params();
 P.days = 1;                     % only the structure is needed
 model_init(P);
-pns = pnstruct({'arrival_pdf', 'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
-                'repair_pdf', 'departure_pdf', ...
-                'imc_arrival_yard', 'imc_yard_wash', 'imc_wash_inspection', ...
-                'imc_inspection_yard', 'imc_inspection_repair', 'imc_repair_yard', ...
-                'imc_yard_departure'});
+pdfs = {'arrival_pdf', 'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
+        'repair_pdf', 'departure_pdf', ...
+        'imc_arrival_yard', 'imc_yard_wash', 'imc_wash_inspection', ...
+        'imc_inspection_yard', 'imc_inspection_repair', 'imc_repair_yard', ...
+        'imc_yard_departure'};
+pns = pnstruct(pdfs);
 dyn = model_dyn(P, pns);
 
 pinvariant(pns);
@@ -78,3 +81,26 @@ fprintf('  The crew can inspect at most %.0f joints a week (%.1f per man-hour); 
         b, b / (sum(P.crew)*week/60), L - 1);
 fprintf('  The wash can wash at most %.0f a week (%d lanes, %.1f min a joint).\n', ...
         P.wash_lanes*week/wash, P.wash_lanes, wash);
+
+% Traps. A trap that holds a token keeps one for ever. On the full net the
+% enumeration doesn't finish: the hall has one transition per qualified
+% person at each step. So the traps are found on a skeleton with one
+% transition per hall step (crew [0 0 0 1]) and one wash lane. A step's
+% transitions all have the same input and output places, so the skeleton
+% has the same traps; lane 2 is a copy of lane 1. Result (2026-10-30, 579 s):
+% the supports of the 6 invariants above, which are marked at the start and
+% so stay marked, and the sinks {pDShipped} and {pYScrap}, which keep every
+% shipped or scrapped joint. Siphons (siphons_minimal) and T-invariants
+% (tinvariant) don't finish within 15 min even on the skeleton.
+if find_traps
+    Q = P;
+    Q.crew = [0 0 0 1];
+    Q.wash_lanes = 1;
+    model_init(Q);
+    sk = pnstruct(pdfs);
+    fprintf('\nSkeleton: %d places, %d transitions (full net: %d, %d)\n', ...
+            sk.No_of_places, sk.No_of_transitions, pns.No_of_places, pns.No_of_transitions);
+    tic;
+    traps_minimal(sk);
+    fprintf('  (%.0f s)\n', toc);
+end

@@ -1,10 +1,11 @@
 % PDF: arrival_pdf.m
 %
-% %%%%%%%   Arrival
+% %%%%%%%   Arrival (module)
 % Unloads the joints in global_info.pipes one at a time, each when its time
-% has come (COMMON_PRE). The joint's kind picks the transition: tALong and
-% tAShort for joints that need the hall, tABypass for storage only.
+% has come (MOD_Arrival_PRE). The joint's kind picks the output port: tALong
+% and tAShort for joints that need the hall, tABypass for storage only.
 % The clock token loops back so the next joint can be unloaded.
+% Output ports: tALong, tAShort, tABypass (colourless joints)
 
 function [png] = arrival_pdf()
 
@@ -16,3 +17,4 @@ png.set_of_As = { ...
   'pAClock', 'tAShort',  1, 'tAShort',  'pAClock', 1 ...
   'pAClock', 'tABypass', 1, 'tABypass', 'pAClock', 1 ...
  };
+png.set_of_Ports = {'tALong', 'tAShort', 'tABypass'};

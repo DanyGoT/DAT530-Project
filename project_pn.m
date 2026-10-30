@@ -72,6 +72,8 @@
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%   Main simulation file
 %
+% Six Petri modules (modules/), joined by connectors (imc/) that hold the
+% places between them; tokens cross only through port transitions.
 % Token = one joint (pipe). In the yard a joint's kind is the place it is in.
 % In the wash and the hall it carries colours: 'long'/'short', what inspection
 % will find ('ok', 'mach', 'hb' or 'scrap'), its order, and 'scrapped' once
@@ -83,7 +85,7 @@ global global_info
 P = params();
 % P.crew = [3 2 0 2];          % try another crew (L0-L3), as in the 2021 report
 
-model_init(P);                  % arrivals, demand and hall steps into global_info
+model_init(P);                  % arrivals, demand, start state and hall steps into global_info
 pns = pnstruct({'arrival_pdf', 'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
                 'repair_pdf', 'departure_pdf', ...
                 'imc_arrival_yard', 'imc_yard_wash', 'imc_wash_inspection', ...
@@ -96,14 +98,21 @@ Sim_Results = gpensim(pni);
 out = {'tIOk', 'tIMach', 'tIHb', 'tIScrap'};
 n = cellfun(@timesfired, out);
 disp(['Joints arrived: ', int2str(global_info.next_pipe - 1), ...
+      ' (and ', int2str(numel(global_info.backlog)), ' queued at the start)', ...
       ', inspected: ', int2str(sum(n)), ' (ok ', int2str(n(1)), ', machining ', int2str(n(2)), ...
       ', hardbanding ', int2str(n(3)), ', scrap ', int2str(n(4)), ...
       '), shipped: ', int2str(timesfired('tDShip'))]);
+disp(['Back from the workshops: ', int2str(timesfired('tRMachHall') + timesfired('tRHbHall')), ...
+      ' to the hall, ', int2str(timesfired('tRMachReady') + timesfired('tRHbReady')), ' to stock']);
 weekdays = sum(mod(0:P.days-1, 7) < 5);
-man_hours = sum(P.crew) * weekdays * diff(P.shift)/60;
+man_hours = sum(P.crew) * weekdays * diff(P.shift)/60;      % the whole crew, wash included
 disp(['Joints per man-hour: ', num2str(sum(n)/man_hours, 2), ' (KPI 4, now ~3.3)']);
+switches = sum(cellfun(@(k) timesfired(sprintf('tWToShort_%d', k)) + timesfired(sprintf('tWToLong_%d', k)), ...
+                       num2cell(1:P.wash_lanes)));
+disp(['Wash mobilized ', int2str(timesfired('tWMobilize')), ' times, ', int2str(switches), ...
+      ' long/short changeovers (hall data: ~5 a week)']);
 prnschedule(Sim_Results);                                    % who worked how much
-plotp(Sim_Results, {'pYLong', 'pYShort', 'pWBuf'});          % queue in front of the hall
+plotp(Sim_Results, {'pYLong', 'pYShort', 'pWRack', 'pWI'});  % queue in front of the hall
 plotp(Sim_Results, {'pISpace'});                             % free room on the hall floor
-plotp(Sim_Results, {'pYReady', 'pDDemand'});                 % stock and unmet demand
+plotp(Sim_Results, {'pYReady', 'pDYOrder'});                 % stock and unmet demand
 plotp(Sim_Results, {'pDShipped', 'pRMach', 'pRHb', 'pYScrap'});  % where joints went

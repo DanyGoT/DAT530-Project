@@ -1,0 +1,123 @@
+// The whole net (project_pn.m): each module shows only its ports, input
+// ports left and output ports right; each inter-modular connector (imc/)
+// shows only its places.
+// Solid boxes: modules. Dashed boxes: connectors. Bars: port transitions.
+// The main flow runs straight along the top (group=main); arcs back to the
+// yard don't set the left-to-right order (constraint=false) and enter each
+// column below it. The invisible same-rank chains fix the order of the ports
+// in a column; inside these clusters dot stacks them bottom to top.
+digraph Overview {
+  rankdir=LR; nodesep=0.3; ranksep=0.7; forcelabels=true; newrank=true;
+  fontname="Helvetica"; fontsize=12;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  // ---------- modules (ports only)
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+
+  subgraph cluster_Arrival {
+    label="Arrival"; style=rounded; color=black;
+    tALong [xlabel="tALong", group=main]; tAShort [xlabel="tAShort"]; tABypass [xlabel="tABypass"];
+    { rank=same; tABypass -> tAShort -> tALong [style=invis]; }
+  }
+
+  subgraph cluster_Yard {
+    label="Yard"; style=rounded; color=black;
+    tYInLong [xlabel="tYInLong", group=main]; tYInShort [xlabel="tYInShort"];
+    tYInBypass [xlabel="tYInBypass"]; tYRoom [xlabel="tYRoom"]; tYInOk [xlabel="tYInOk"];
+    tYInScrap [xlabel="tYInScrap"]; tYInRepaired [xlabel="tYInRepaired"]; tYOrder [xlabel="tYOrder"];
+    tYLong [xlabel="tYLong", group=main]; tYShort [xlabel="tYShort"]; tYShip [xlabel="tYShip"];
+    { rank=same; tYOrder -> tYInRepaired -> tYInScrap -> tYInOk -> tYRoom
+                 -> tYInBypass -> tYInShort -> tYInLong [style=invis]; }
+    { rank=same; tYShip -> tYShort -> tYLong [style=invis]; }
+    tYInLong -> tYLong [style=invis, weight=10];
+  }
+
+  subgraph cluster_Washing {
+    label="Washing"; style=rounded; color=black;
+    tWIn [xlabel="tWIn", group=main]; tWOut [xlabel="tWOut", group=main];
+    tWIn -> tWOut [style=invis, weight=10];
+  }
+
+  subgraph cluster_Inspection {
+    label="Inspection"; style=rounded; color=black;
+    tIIn [xlabel="tIIn", group=main]; tIInRepair [xlabel="tIInRepair"];
+    tIMach [xlabel="tIMach", group=main]; tIHb [xlabel="tIHb"]; tIOk [xlabel="tIOk"];
+    tIScrap [xlabel="tIScrap"]; tIRoom [xlabel="tIRoom"];
+    { rank=same; tIInRepair -> tIIn [style=invis]; }
+    { rank=same; tIScrap -> tIOk -> tIRoom -> tIHb -> tIMach [style=invis]; }
+    tIIn -> tIMach [style=invis, weight=10];
+  }
+
+  subgraph cluster_Repair {
+    label="Repair"; style=rounded; color=black;
+    tRInMach [xlabel="tRInMach", group=main]; tRInHb [xlabel="tRInHb"];
+    tRMachHall [xlabel="tRMachHall", group=main]; tRHbHall [xlabel="tRHbHall"];
+    tRMachReady [xlabel="tRMachReady"]; tRHbReady [xlabel="tRHbReady"];
+    { rank=same; tRInHb -> tRInMach [style=invis]; }
+    { rank=same; tRHbReady -> tRMachReady -> tRHbHall -> tRMachHall [style=invis]; }
+    tRInMach -> tRMachHall [style=invis, weight=10];
+  }
+
+  subgraph cluster_Departure {
+    label="Departure"; style=rounded; color=black;
+    tDShip [xlabel="tDShip"]; tDTicket [xlabel="tDTicket"];
+    tDShip -> tDTicket [style=invis];
+  }
+
+  // ---------- connectors (places only)
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+
+  subgraph cluster_imc_arrival_yard {
+    label="imc_arrival_yard"; style=dashed; color=gray40; fontcolor=gray30;
+    pAYLong [xlabel="pAYLong", group=main]; pAYShort [xlabel="pAYShort"]; pAYBypass [xlabel="pAYBypass"];
+    { rank=same; pAYBypass -> pAYShort -> pAYLong [style=invis]; }
+  }
+  subgraph cluster_imc_yard_wash {
+    label="imc_yard_wash"; style=dashed; color=gray40; fontcolor=gray30;
+    pYW [xlabel="pYW", group=main];
+  }
+  subgraph cluster_imc_wash_inspection {
+    label="imc_wash_inspection"; style=dashed; color=gray40; fontcolor=gray30;
+    pWI [xlabel="pWI", group=main];
+  }
+  subgraph cluster_imc_inspection_repair {
+    label="imc_inspection_repair"; style=dashed; color=gray40; fontcolor=gray30;
+    pIRMach [xlabel="pIRMach", group=main]; pIRHb [xlabel="pIRHb"]; pRI [xlabel="pRI", group=main];
+    { rank=same; pIRHb -> pIRMach [style=invis]; }
+  }
+  subgraph cluster_imc_inspection_yard {
+    label="imc_inspection_yard"; style=dashed; color=gray40; fontcolor=gray30;
+    pIYOk [xlabel="pIYOk"]; pIYScrap [xlabel="pIYScrap"]; pIYRoom [xlabel="pIYRoom"];
+    { rank=same; pIYScrap -> pIYOk -> pIYRoom [style=invis]; }
+  }
+  subgraph cluster_imc_repair_yard {
+    label="imc_repair_yard"; style=dashed; color=gray40; fontcolor=gray30;
+    pRYReady [xlabel="pRYReady"];
+  }
+  subgraph cluster_imc_yard_departure {
+    label="imc_yard_departure"; style=dashed; color=gray40; fontcolor=gray30;
+    pYDOut [xlabel="pYDOut"]; pDYOrder [xlabel="pDYOrder"];
+  }
+
+  // ---------- arcs (all in imc/)
+  tALong -> pAYLong -> tYInLong;
+  tAShort -> pAYShort -> tYInShort;
+  tABypass -> pAYBypass -> tYInBypass;
+
+  tYLong -> pYW;  tYShort -> pYW;  pYW -> tWIn;
+  tWOut -> pWI -> tIIn;
+
+  tIMach -> pIRMach -> tRInMach;
+  tIHb -> pIRHb -> tRInHb;
+  tRMachHall -> pRI;  tRHbHall -> pRI;  pRI -> tIInRepair [constraint=false];
+
+  tIOk -> pIYOk;  pIYOk -> tYInOk [constraint=false];
+  tIScrap -> pIYScrap;  pIYScrap -> tYInScrap [constraint=false];
+  tIRoom -> pIYRoom;  pIYRoom -> tYRoom [constraint=false];
+  tRMachReady -> pRYReady;  tRHbReady -> pRYReady;  pRYReady -> tYInRepaired [constraint=false];
+
+  tYShip -> pYDOut -> tDShip;
+  tDTicket -> pDYOrder;  pDYOrder -> tYOrder [constraint=false];
+}

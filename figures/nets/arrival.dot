@@ -1,0 +1,20 @@
+// Arrival module (modules/arrival/arrival_pdf.m)
+// Circles: places. Bars: transitions, blue = port. Double-headed arc: the
+// transition takes the token and puts it back (self-loop).
+digraph Arrival {
+  rankdir=LR; nodesep=0.35; ranksep=0.7; forcelabels=true;
+  label="Arrival"; labelloc=t; fontname="Helvetica"; fontsize=14;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  node [shape=circle, fixedsize=true, width=0.32];
+  pAClock [xlabel="pAClock", label=<<font point-size="14">●</font>>];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+  { rank=max; tALong [xlabel="tALong"]; tAShort [xlabel="tAShort"]; tABypass [xlabel="tABypass"]; }
+
+  pAClock -> tALong   [dir=both];
+  pAClock -> tAShort  [dir=both];
+  pAClock -> tABypass [dir=both];
+}

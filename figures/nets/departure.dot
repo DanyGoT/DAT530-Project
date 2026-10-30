@@ -1,0 +1,21 @@
+// Departure module (modules/departure/departure_pdf.m)
+// Circles: places. Bars: transitions, blue = port. Double-headed arc: the
+// transition takes the token and puts it back (self-loop).
+digraph Departure {
+  rankdir=LR; nodesep=0.35; ranksep=0.7; forcelabels=true;
+  label="Departure"; labelloc=t; fontname="Helvetica"; fontsize=14;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  node [shape=circle, fixedsize=true, width=0.32];
+  pDClock   [xlabel="pDClock", label=<<font point-size="14">●</font>>];
+  pDShipped [xlabel="pDShipped"];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+  { rank=min; tDShip   [xlabel="tDShip"]; }
+  { rank=max; tDTicket [xlabel="tDTicket"]; }
+
+  tDShip -> pDShipped;
+  pDClock -> tDTicket [dir=both];
+}

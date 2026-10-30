@@ -1,0 +1,60 @@
+// Washing module (modules/wash/wash_pdf.m), P.wash_lanes = 2
+// Circles: places. Bars: transitions, blue = port. Double-headed arc: the
+// transition takes the token and puts it back (self-loop).
+// Tokens shown: the unit starts demobilized, both lanes set up for long.
+// Joints run along the middle (rack -> wash -> done); lane 1 above, lane 2
+// below. Arcs that close a cycle (demobilize, change back to long) run
+// right to left and don't set the order (constraint=false).
+digraph Washing {
+  rankdir=LR; nodesep=0.3; ranksep=0.6; forcelabels=true;
+  label="Washing"; labelloc=t; fontname="Helvetica"; fontsize=14;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+  { rank=min; tWIn [xlabel="tWIn", group=main]; }
+  { rank=max; tWOut [xlabel="tWOut", group=main]; }
+
+  node [color=black, fillcolor=black];
+  tWMobilize [xlabel="tWMobilize"]; tWDemobilize [xlabel="tWDemobilize"];
+  tWToShort_1 [xlabel="tWToShort_1", group=lane1]; tWToLong_1 [xlabel="tWToLong_1", group=lane1];
+  tWToShort_2 [xlabel="tWToShort_2", group=lane2]; tWToLong_2 [xlabel="tWToLong_2", group=lane2];
+  { rank=same; tWShort_1 [xlabel="tWShort_1"]; tWLong_1 [xlabel="tWLong_1"];
+               tWLong_2 [xlabel="tWLong_2"]; tWShort_2 [xlabel="tWShort_2"];
+               tWToLong_1 -> tWShort_1 -> tWLong_1 -> tWLong_2 -> tWShort_2 -> tWToLong_2 [style=invis]; }
+
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pWRack [xlabel="pWRack", group=main]; pWDone [xlabel="pWDone", group=main];
+  pWOff [xlabel="pWOff", label=<<font point-size="14">●</font>>];
+  pWReady_1 [xlabel="pWReady_1"]; pWLong_1 [xlabel="pWLong_1", group=lane1, label=<<font point-size="14">●</font>>];
+  pWShort_1 [xlabel="pWShort_1", group=lane1];
+  pWReady_2 [xlabel="pWReady_2"]; pWLong_2 [xlabel="pWLong_2", group=lane2, label=<<font point-size="14">●</font>>];
+  pWShort_2 [xlabel="pWShort_2", group=lane2];
+
+  // top to bottom: lane 1, joints, lane 2
+  { rank=same; pWLong_1 -> pWReady_1 -> pWRack -> pWReady_2 -> pWLong_2 [style=invis]; }
+  { rank=same; pWShort_1 -> pWShort_2 [style=invis]; }
+
+  tWIn -> pWRack;
+  pWDone -> tWOut;
+  tWIn -> tWMobilize [style=invis];
+  { rank=same; pWDone; tWDemobilize; }
+
+  pWOff -> tWMobilize;
+  tWMobilize -> pWReady_1;  tWMobilize -> pWReady_2;
+  pWReady_1 -> tWDemobilize;  pWReady_2 -> tWDemobilize;
+  tWDemobilize -> pWOff [constraint=false];
+
+  // lane 1: change over, then wash with the lane's length
+  pWLong_1 -> tWToShort_1;   tWToShort_1 -> pWShort_1; pWReady_1 -> tWToShort_1 [dir=both];
+  pWShort_1 -> tWToLong_1;   tWToLong_1 -> pWLong_1 [constraint=false]; pWReady_1 -> tWToLong_1 [dir=both];
+  pWRack -> tWLong_1;   pWReady_1 -> tWLong_1 [dir=both];  pWLong_1 -> tWLong_1 [dir=both];   tWLong_1 -> pWDone;
+  pWRack -> tWShort_1;  pWReady_1 -> tWShort_1 [dir=both]; pWShort_1 -> tWShort_1 [dir=both]; tWShort_1 -> pWDone;
+
+  // lane 2
+  pWLong_2 -> tWToShort_2;   tWToShort_2 -> pWShort_2; pWReady_2 -> tWToShort_2 [dir=both];
+  pWShort_2 -> tWToLong_2;   tWToLong_2 -> pWLong_2 [constraint=false]; pWReady_2 -> tWToLong_2 [dir=both];
+  pWRack -> tWLong_2;   pWReady_2 -> tWLong_2 [dir=both];  pWLong_2 -> tWLong_2 [dir=both];   tWLong_2 -> pWDone;
+  pWRack -> tWShort_2;  pWReady_2 -> tWShort_2 [dir=both]; pWShort_2 -> tWShort_2 [dir=both]; tWShort_2 -> pWDone;
+}

@@ -1,0 +1,34 @@
+// Yard module (modules/yard/yard_pdf.m)
+// Circles: places. Bars: transitions, blue = port.
+// Tokens shown: pYRoom = P.hall_buffer. pYLong, pYShort (backlog) and
+// pYReady (stock) start from data.
+digraph Yard {
+  rankdir=LR; nodesep=0.3; ranksep=0.9; forcelabels=true;
+  label="Yard"; labelloc=t; fontname="Helvetica"; fontsize=14;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+  { rank=min;
+    tYInLong [xlabel="tYInLong"]; tYInShort [xlabel="tYInShort"]; tYRoom [xlabel="tYRoom"];
+    tYInBypass [xlabel="tYInBypass"]; tYInOk [xlabel="tYInOk"]; tYInRepaired [xlabel="tYInRepaired"];
+    tYOrder [xlabel="tYOrder"]; tYInScrap [xlabel="tYInScrap"]; }
+  { rank=max; tYLong [xlabel="tYLong"]; tYShort [xlabel="tYShort"]; tYShip [xlabel="tYShip"]; }
+
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pYLong  [xlabel="pYLong"];
+  pYShort [xlabel="pYShort"];
+  pYRoom  [xlabel="pYRoom", label="20"];
+  pYReady [xlabel="pYReady"];
+  pYOrder [xlabel="pYOrder"];
+  pYScrap [xlabel="pYScrap"];
+
+  tYInLong -> pYLong;  tYInShort -> pYShort;  tYRoom -> pYRoom;
+  tYInBypass -> pYReady;  tYInOk -> pYReady;  tYInRepaired -> pYReady;
+  tYOrder -> pYOrder;  tYInScrap -> pYScrap;
+
+  pYLong -> tYLong;  pYRoom -> tYLong;
+  pYShort -> tYShort;  pYRoom -> tYShort;
+  pYReady -> tYShip;  pYOrder -> tYShip;
+}

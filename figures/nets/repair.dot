@@ -1,0 +1,22 @@
+// Repair module (modules/repair/repair_pdf.m)
+// Circles: places. Bars: transitions, blue = port.
+// pRMach and pRHb start with the workshops' open repairs (from data).
+digraph Repair {
+  rankdir=LR; nodesep=0.35; ranksep=0.9; forcelabels=true;
+  label="Repair"; labelloc=t; fontname="Helvetica"; fontsize=14;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  node [shape=circle, fixedsize=true, width=0.32];
+  pRMach [xlabel="pRMach"];
+  pRHb   [xlabel="pRHb"];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+  { rank=min; tRInMach [xlabel="tRInMach"]; tRInHb [xlabel="tRInHb"]; }
+  { rank=max; tRMachHall [xlabel="tRMachHall"]; tRMachReady [xlabel="tRMachReady"];
+              tRHbHall [xlabel="tRHbHall"]; tRHbReady [xlabel="tRHbReady"]; }
+
+  tRInMach -> pRMach;  pRMach -> tRMachHall;  pRMach -> tRMachReady;
+  tRInHb   -> pRHb;    pRHb   -> tRHbHall;    pRHb   -> tRHbReady;
+}

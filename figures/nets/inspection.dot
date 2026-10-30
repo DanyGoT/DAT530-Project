@@ -1,0 +1,127 @@
+// Inspection module (modules/inspection/inspection_pdf.m)
+// Circles: places. Bars: transitions, blue = port, white = skip.
+// Step k is pI<step> -> tI<step>_1..m -> next step, one transition per person
+// qualified for it (crew [2 3 1 1]: L0 steps 7, L1 5, L2 2, L3 1).
+// tI<step>Skip lets found scrap pass steps it doesn't need.
+// Tokens shown: pISpace = P.hall_space. pIStart (joints on the floor at
+// t = 0) starts from data.
+digraph Inspection {
+  rankdir=LR; nodesep=0.12; ranksep=0.55; forcelabels=true;
+  label="Inspection"; labelloc=t; fontname="Helvetica"; fontsize=14;
+  node [fontname="Helvetica", fontsize=10, label=""];
+  edge [arrowsize=0.6, penwidth=0.8];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color="#1f5fa8", fillcolor="#1f5fa8"];
+  { rank=min; tIIn [xlabel="tIIn"]; tIInRepair [xlabel="tIInRepair"]; }
+  { rank=max; tIRoom [xlabel="tIRoom"]; tIOk [xlabel="tIOk"]; tIMach [xlabel="tIMach"];
+              tIHb [xlabel="tIHb"]; tIScrap [xlabel="tIScrap"]; }
+
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pISpace [xlabel="pISpace", label="30"];
+  pIStart [xlabel="pIStart"];
+  pIRoom  [xlabel="pIRoom"];
+  pIDone  [xlabel="pIDone"];
+
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
+        color=black, fillcolor=black];
+  tIStart [xlabel="tIStart"];
+
+  pIStart -> tIStart;  pISpace -> tIStart;  tIStart -> pIGauge;
+  pISpace -> tIIn;     tIIn -> pIGauge;
+  pISpace -> tIInRepair;  tIInRepair -> pIGauge;
+  tIIn -> pIRoom;      pIRoom -> tIRoom;
+
+  // Gauge
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIGauge [xlabel="pIGauge"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIGauge_1 [xlabel="tIGauge_1"];  pIGauge -> tIGauge_1;  tIGauge_1 -> pIClean;
+  tIGauge_2 [xlabel="tIGauge_2"];  pIGauge -> tIGauge_2;  tIGauge_2 -> pIClean;
+  tIGauge_3 [xlabel="tIGauge_3"];  pIGauge -> tIGauge_3;  tIGauge_3 -> pIClean;
+  tIGauge_4 [xlabel="tIGauge_4"];  pIGauge -> tIGauge_4;  tIGauge_4 -> pIClean;
+  tIGauge_5 [xlabel="tIGauge_5"];  pIGauge -> tIGauge_5;  tIGauge_5 -> pIClean;
+
+  // Clean
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIClean [xlabel="pIClean"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIClean_1 [xlabel="tIClean_1"];  pIClean -> tIClean_1;  tIClean_1 -> pINDT;
+  tIClean_2 [xlabel="tIClean_2"];  pIClean -> tIClean_2;  tIClean_2 -> pINDT;
+  tIClean_3 [xlabel="tIClean_3"];  pIClean -> tIClean_3;  tIClean_3 -> pINDT;
+  tIClean_4 [xlabel="tIClean_4"];  pIClean -> tIClean_4;  tIClean_4 -> pINDT;
+  tIClean_5 [xlabel="tIClean_5"];  pIClean -> tIClean_5;  tIClean_5 -> pINDT;
+  tIClean_6 [xlabel="tIClean_6"];  pIClean -> tIClean_6;  tIClean_6 -> pINDT;
+  tIClean_7 [xlabel="tIClean_7"];  pIClean -> tIClean_7;  tIClean_7 -> pINDT;
+  tICleanSkip [xlabel="tICleanSkip", fillcolor=white];  pIClean -> tICleanSkip;  tICleanSkip -> pINDT;
+
+  // NDT
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pINDT [xlabel="pINDT"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tINDT_1 [xlabel="tINDT_1"];  pINDT -> tINDT_1;  tINDT_1 -> pIThreads;
+  tINDT_2 [xlabel="tINDT_2"];  pINDT -> tINDT_2;  tINDT_2 -> pIThreads;
+  tINDT_3 [xlabel="tINDT_3"];  pINDT -> tINDT_3;  tINDT_3 -> pIThreads;
+  tINDT_4 [xlabel="tINDT_4"];  pINDT -> tINDT_4;  tINDT_4 -> pIThreads;
+  tINDT_5 [xlabel="tINDT_5"];  pINDT -> tINDT_5;  tINDT_5 -> pIThreads;
+  tINDTSkip [xlabel="tINDTSkip", fillcolor=white];  pINDT -> tINDTSkip;  tINDTSkip -> pIThreads;
+
+  // Threads
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIThreads [xlabel="pIThreads"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIThreads_1 [xlabel="tIThreads_1"];  pIThreads -> tIThreads_1;  tIThreads_1 -> pIMeasure;
+  tIThreads_2 [xlabel="tIThreads_2"];  pIThreads -> tIThreads_2;  tIThreads_2 -> pIMeasure;
+
+  // Measure
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIMeasure [xlabel="pIMeasure"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIMeasure_1 [xlabel="tIMeasure_1"];  pIMeasure -> tIMeasure_1;  tIMeasure_1 -> pIUT;
+  tIMeasure_2 [xlabel="tIMeasure_2"];  pIMeasure -> tIMeasure_2;  tIMeasure_2 -> pIUT;
+  tIMeasure_3 [xlabel="tIMeasure_3"];  pIMeasure -> tIMeasure_3;  tIMeasure_3 -> pIUT;
+  tIMeasure_4 [xlabel="tIMeasure_4"];  pIMeasure -> tIMeasure_4;  tIMeasure_4 -> pIUT;
+  tIMeasure_5 [xlabel="tIMeasure_5"];  pIMeasure -> tIMeasure_5;  tIMeasure_5 -> pIUT;
+
+  // UT
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIUT [xlabel="pIUT"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIUT_1 [xlabel="tIUT_1"];  pIUT -> tIUT_1;  tIUT_1 -> pIFinish;
+  tIUTSkip [xlabel="tIUTSkip", fillcolor=white];  pIUT -> tIUTSkip;  tIUTSkip -> pIFinish;
+
+  // Finish
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIFinish [xlabel="pIFinish"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIFinish_1 [xlabel="tIFinish_1"];  pIFinish -> tIFinish_1;  tIFinish_1 -> pIMark;
+  tIFinish_2 [xlabel="tIFinish_2"];  pIFinish -> tIFinish_2;  tIFinish_2 -> pIMark;
+  tIFinish_3 [xlabel="tIFinish_3"];  pIFinish -> tIFinish_3;  tIFinish_3 -> pIMark;
+  tIFinish_4 [xlabel="tIFinish_4"];  pIFinish -> tIFinish_4;  tIFinish_4 -> pIMark;
+  tIFinish_5 [xlabel="tIFinish_5"];  pIFinish -> tIFinish_5;  tIFinish_5 -> pIMark;
+  tIFinish_6 [xlabel="tIFinish_6"];  pIFinish -> tIFinish_6;  tIFinish_6 -> pIMark;
+  tIFinish_7 [xlabel="tIFinish_7"];  pIFinish -> tIFinish_7;  tIFinish_7 -> pIMark;
+
+  // Mark
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIMark [xlabel="pIMark"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIMark_1 [xlabel="tIMark_1"];  pIMark -> tIMark_1;  tIMark_1 -> pIReport;
+  tIMark_2 [xlabel="tIMark_2"];  pIMark -> tIMark_2;  tIMark_2 -> pIReport;
+  tIMark_3 [xlabel="tIMark_3"];  pIMark -> tIMark_3;  tIMark_3 -> pIReport;
+  tIMark_4 [xlabel="tIMark_4"];  pIMark -> tIMark_4;  tIMark_4 -> pIReport;
+  tIMark_5 [xlabel="tIMark_5"];  pIMark -> tIMark_5;  tIMark_5 -> pIReport;
+  tIMarkSkip [xlabel="tIMarkSkip", fillcolor=white];  pIMark -> tIMarkSkip;  tIMarkSkip -> pIReport;
+
+  // Report
+  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
+  pIReport [xlabel="pIReport"];
+  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color=black, fillcolor=black];
+  tIReport_1 [xlabel="tIReport_1"];  pIReport -> tIReport_1;  tIReport_1 -> pIDone;
+  tIReport_2 [xlabel="tIReport_2"];  pIReport -> tIReport_2;  tIReport_2 -> pIDone;
+
+  // out of the hall: each exit gives back a spot on the floor
+  pIDone -> tIOk;  pIDone -> tIMach;  pIDone -> tIHb;  pIDone -> tIScrap;
+  tIOk -> pISpace [constraint=false];  tIMach -> pISpace [constraint=false];
+  tIHb -> pISpace [constraint=false];  tIScrap -> pISpace [constraint=false];
+}

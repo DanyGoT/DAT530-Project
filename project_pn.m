@@ -70,4 +70,5 @@
 % 
 
 clear all; clc;
-[Sim_Results, Order_Summary, Inventory_Summary, Resource_Summary] = run_pipe_simulation();
+% Edit pipe_yard_config.m to change the inputs (times, percentages, workers ...)
+[Sim_Results, Report] = run_pipe_yard();

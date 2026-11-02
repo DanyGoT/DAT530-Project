@@ -1,61 +1,50 @@
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PDF: it_pn_pdf.m
+%
 % %%%%%%%   IT avdeling
-% 
-% TODO: Fyll ut transitions og nodes
-% 
-% Ordre inn
-% Blir denne som håndterer alt
-% Bestemmer antall rør, hvilke rør, når, prioritet, alt sånt
-% 
+% IT keeps track of every pipe. Each place is a status register, and every
+% hand-over between Logistics and Operations goes through an IT transition:
 %
-% Tanker:
-% - Behandle ordre i tre states: Nye ordre, ongoing orders og completed orders. Mulig vi skulle endret dette til å bruke en "backlog" av ordre
-%   - Kanskje bruke colours i stedet, men inntil vi introduserer colours så får det bare gå
+%   incoming -> ready for washing -> ready for inspection
+%            -> ready to ship | ready for easy/hard repair -> repair done -> ready to ship
+%            -> scrapped
 %
-% I/O:
-% | Order Input
-% | Pipe command output (qty, type, scope, logistics/operations)
-% | Receiving pipes in
-% | Sending pipes out
-% | Storing pipes 
-% | Inspecting pipes
-%
-% Order ->
-%   Pipes received
-%     To Storage
-%       Order put in backlog
-%       No inspection specified for order (just sent pipes for keepig in backlog)
-%   Pipes already in storage
-%
-%     To Inspection hall
-%       Order being handled
-%       When finished, order status update
-%       Pipes are moved to repair (creates a repair order)
-%       Pipes are moved to storage
-%       Delivery of pipes is ordered back to customer
-%       Order set as complete
-% 
-%   Order gets invoiced
-% 
-% TODO: Legg på pre og post processing. IT-systemet trenger det veldig
+% Places owned by other modules (pL*, pO*) are the department "out trays".
 
 function [pns] = it_pn_pdf()
+global global_info
+cfg = global_info.cfg;
 
-pns.PN_name = 'IT Service Petri Net model';
+pns.PN_name = 'IT';
+pns.set_of_Ps = {'pIIncoming', 'pIReadyForWash', 'pIReadyForInspection', ...
+    'pIReadyForEasyRepair', 'pIReadyForHardRepair', 'pIRepairDone', ...
+    'pIReadyToShip', 'pIScrapped'};
+pns.set_of_Ts = {};
+pns.set_of_As = {};
 
-pns.set_of_Ps = {'pINewOrders', 'pIOngoingOrders', 'pICompletedOrders', ...
-  'pIReceives', 'pIInspections', 'pIDeliveries', 'pIInvoices'};
+% Incoming trucks: each notice token fires at the truck's arrival time
+for truck = 1:height(cfg.incoming)
+    notice = sprintf('pIArrivalNotice%d', truck);
+    arrival = sprintf('tIArrival%d', truck);
+    pns.set_of_Ps{end+1} = notice;
+    pns.set_of_Ts{end+1} = arrival;
+    pns.set_of_As = [pns.set_of_As, pipe_yard_task(arrival, ...
+        {notice, 1}, {'pIIncoming', cfg.incoming.Pipes(truck)})];
+end
 
-pns.set_of_Ts = {'tIProcessOrder', 'tIProcessReceive', 'tIProcessDelivery', ...
-  'tIReceiveFromOrder', 'tIInspectionFromOrder', 'tIDeliveryFromOrder', 'tIInvoiceFromOrder'};
+%            transition              from            to
+registers = {'tIRegisterUnloaded',   'pLUnloaded',   'pIReadyForWash'; ...
+             'tIRegisterWashed',     'pOWashed',     'pIReadyForInspection'; ...
+             'tIRegisterPassed',     'pOPassed',     'pIReadyToShip'; ...
+             'tIRegisterEasyRepair', 'pOEasyRepair', 'pIReadyForEasyRepair'; ...
+             'tIRegisterHardRepair', 'pOHardRepair', 'pIReadyForHardRepair'; ...
+             'tIRegisterRepaired',   'pORepaired',   'pIRepairDone'; ...
+             'tIReleaseRepaired',    'pIRepairDone', 'pIReadyToShip'; ...
+             'tIRegisterScrap',      'pOScrap',      'pIScrapped'};
+for row = 1:size(registers, 1)
+    pns.set_of_Ts{end+1} = registers{row, 1};
+    pns.set_of_As = [pns.set_of_As, pipe_yard_task(registers{row, 1}, ...
+        {registers{row, 2}, 1}, {registers{row, 3}, 1})];
+end
 
-pns.set_of_As = { ...
-  'pINewOrders',     'tIReceiveFromOrder',    1, 'tIReceiveFromOrder',    'pIOngoingOrders',   1, ... % Receive from order
-  'pINewOrders',     'tIReceiveFromOrder',    1, 'tIReceiveFromOrder',    'pIReceives',        1, ... % 
-  'pIOngoingOrders', 'tIInspectionFromOrder', 1, 'tIInspectionFromOrder', 'pIOngoingOrders',   1, ... % Inspection from order
-  'pIOngoingOrders', 'tIInspectionFromOrder', 1, 'tIInspectionFromOrder', 'pIInspections',     1, ... %
-  'pIOngoingOrders', 'tIDeliveryFromOrder',   1, 'tIDeliveryFromOrder',   'pIOngoingOrders',   1, ... % Delivery from order
-  'pIOngoingOrders', 'tIDeliveryFromOrder',   1, 'tIDeliveryFromOrder',   'pIDeliveries',      1, ... %
-  'pIOngoingOrders', 'tIInvoiceFromOrder',    1, 'tIInvoiceFromOrder',    'pICompletedOrders', 1, ... % Invoice from order
-  'pIOngoingOrders', 'tIInvoiceFromOrder',    1, 'tIInvoiceFromOrder',    'pIInvoices',        1 ... %
-};
+pns.set_of_Ports = setdiff(registers(:, 1)', {'tIReleaseRepaired'}, 'stable');
+end

@@ -13,7 +13,7 @@ for day = -P.workshop_history:-1
     if mod(day, 7) >= 5, continue; end            % weekend (t = 0 is a Monday)
     n = 0;
     while n < P.inspected_per_day
-        t = day*1440 + P.shift(1) + rand*diff(P.shift);
+        t = day*1440 + P.open(1) + rand*diff(P.open);
         [joints, repair(end+1, :)] = new_order(P, t, size(repair, 1) + 1);
         if strcmp(joints(1).route, 'bypass'), continue; end
         n = n + numel(joints);

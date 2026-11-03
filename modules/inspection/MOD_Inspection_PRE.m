@@ -4,7 +4,8 @@ function [fire, transition] = MOD_Inspection_PRE(transition)
 % find it, it is found with probability 1/finds_left, so every finding step
 % is equally likely to be the one. Joints already found scrap skip the steps
 % marked skip. Nobody takes work below their level while a joint waits at a
-% step of their own level, so the one L3 is there for UT.
+% step of their own level, so the one L3 is there for UT. A step in P.auto
+% is a machine: it needs no worker.
 
 global global_info
 
@@ -20,6 +21,13 @@ if strcmp(transition.name, 'tIRoom')        % the credit goes back at once
     return
 end
 fire = in_shift(global_info.P);
+if fire && strcmp(transition.name, 'tIIn')  % for days in the yard: COMMON_PRE takes
+    [~, c] = find_token('pWI', @(tok) true);   % the first joint, and it fires now
+    global_info.floor_in(end+1, :) = [current_time(), order_of(c)];
+end
+if fire && ismember(transition.name, {'tIOk', 'tIMach', 'tIHb', 'tIScrap'})
+    log_out(transition.name);               % for lead times; it fires now
+end
 if not(fire) || ismember(transition.name, {'tIIn', 'tIInRepair', 'tIOk', 'tIMach', 'tIHb', 'tIScrap'})
     return
 end
@@ -35,7 +43,11 @@ if s.skip
 else
     [id, c] = find_token(s.place, @(tok) true);
 end
-fire = id > 0 && requestAR(pool(s), 1);        % ask for the worker last
+if s.auto
+    fire = id > 0;                             % a machine
+else
+    fire = id > 0 && requestAR(pool(s), 1);    % ask for the worker last
+end
 if not(fire), return, end
 if s.finds && has_color(c, 'scrap') && not(has_color(c, 'scrapped')) && rand < 1/s.finds_left
     c = [c, {'scrapped'}];
@@ -50,7 +62,21 @@ global global_info
 S = global_info.S;
 levels = {};
 for L = s.level:3
-    own = S([S.level] == L);
+    own = S([S.level] == L & not([S.auto]));
     if L > s.level && any(cellfun(@ntokens, {own.place}) > 0), continue, end
     levels{end+1} = sprintf('L%d', L);
 end
+
+
+function log_out(name)
+% The joint an exit port takes (COMMON_PRE picks the first with its
+% outcome) and how it leaves: [time, order, how]. Joints back from repair
+% carry no order (0).
+global global_info
+how = find(strcmp(name, {'tIOk', 'tIMach', 'tIHb', 'tIScrap'}));
+outcome = {'ok', 'mach', 'hb', 'scrapped'};
+[id, c] = find_token('pIDone', @(tok) has_color(tok.color, outcome{how}));
+if id == 0, return, end
+order = 0;
+if any(strncmp(c, 'order', 5)), order = order_of(c); end
+global_info.hall_out(end+1, :) = [current_time(), order, how];

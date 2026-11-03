@@ -3,7 +3,8 @@ function [S, step_of] = step_list(P)
 % place pI<name> and one transition tI<name>_<i> for each person qualified
 % to do it, so that many joints can be worked on at once. Steps that scrap
 % joints skip also get tI<name>Skip. The last step hands over to pIDone.
-% step_of maps a transition name to its step number.
+% step_of maps a transition name to its step number. A step in P.auto is
+% done by one machine with no one at it: one transition, no worker.
 
 levels = {'L0', 'L1', 'L2', 'L3'};
 n = size(P.steps, 1);
@@ -12,8 +13,10 @@ for k = 1:n
     [name, sec, level, finds, skip] = P.steps{k, :};
     S(k).name  = name;
     S(k).place = ['pI', name];
-    S(k).ts    = arrayfun(@(i) sprintf('tI%s_%d', name, i), 1:sum(P.crew(level+1:end)), ...
-                          'UniformOutput', false);
+    S(k).auto  = ismember(name, P.auto);
+    m = sum(P.crew(level+1:end));
+    if S(k).auto, m = 1; end
+    S(k).ts    = arrayfun(@(i) sprintf('tI%s_%d', name, i), 1:m, 'UniformOutput', false);
     S(k).tskip = '';
     if skip, S(k).tskip = ['tI', name, 'Skip']; end
     S(k).ft    = sec*P.pace/60;

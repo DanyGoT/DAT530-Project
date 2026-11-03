@@ -5,10 +5,14 @@ function P = params()
 P.seed = 1;                       % same seed, same run
 P.days = 7;                       % simulated days
 P.shift = [7 15]*60;              % yard and halls work Mon-Fri 07-15
+P.open = [7 15]*60;               % lorries arrive and tickets come in Mon-Fri 07-15;
+                                  % stays put when the shift changes (overtime)
 
 % Arrivals (§2, §3). Receipts per weekday are negative binomial: busy days and
 % quiet days, as in the data (variance 27 against a mean of 6.9).
-P.receipts_per_day = 6.9;         % mean per weekday
+P.receipts_per_day = 6.7;         % mean per weekday: the data's 6.9 less the 3% that are
+                                  % joints back from a workshop (§12), which the model
+                                  % already sends back to the hall (p_reinspect)
 P.receipts_r = 2.4;               % shape: smaller is burstier
 P.receipts_weekday = [21.0 21.6 20.4 17.8 16.7];   % % of receipts Mon-Fri
 P.p_long = 0.51;                  % DP, TBG, LS are long (13-14 m); HW, DC, NM short (9.5 m)
@@ -19,6 +23,8 @@ P.short_run = 23;                 % short joints the yard sends in one run, whol
                                   % (hall data: ~1 long/short switch a day, runs of 3 orders, 23 joints)
 P.backlog = 650;                  % hall joints already queued in the yard at the start
                                   % (week study §3: 500-800; the business runs a deep queue)
+P.N_in = inf;                     % drain test: arrivals stop after this many hall joints
+P.in_at_zero = false;             % drain test: they all arrive at t = 0
 
 % What inspection will find (§6). Outcomes cluster by order: an order has
 % machining, hardbanding or scrap with p_order, and then that share of its
@@ -29,12 +35,17 @@ P.backlog = 650;                  % hall joints already queued in the yard at th
 P.p_order = [0.45 0.13  0.15];
 P.share   = [0.78 0.46  0.26];    % Rig Return: joint % / P(order has it)
 
-% Deliveries (§8)
-P.tickets_per_day = 4.9;          % mean per weekday, negative binomial (variance 14)
-P.tickets_r = 2.6;
-P.tickets_weekday = [16.3 18.4 19.5 21.3 23.8];    % % of tickets Mon-Fri
-P.mean_ticket = 37;               % mean joints per ticket
+% Deliveries (§8): customer tickets only. Internal tickets (Repair_YN = Yes,
+% 0.74 a weekday, ~49 joints) move pipe between sites and repairers and aren't
+% demand on the yard's stock, so they are left out.
+P.tickets_per_day = 4.1;          % mean per weekday, negative binomial (variance 12)
+P.tickets_r = 2.2;
+P.tickets_weekday = [16.5 18.6 19.2 20.9 23.9];    % % of tickets Mon-Fri
+P.mean_ticket = 35;               % mean joints per ticket (median 10, p90 100)
 P.stock = 300;                    % rig-ready joints at the start (the real yard holds ~12,000, §9)
+P.ship_ready = false;             % drain test: ship every rig-ready joint at once, no tickets
+P.stop_clear = false;             % drain test: stop once every joint has arrived and the
+                                  % hall, the wash and the yard's hall queue are empty
 
 % Washing (§5.3). One automated unit with two pumps (two lanes), each lane set
 % up for long or short joints. Someone from the crew mans the unit while it
@@ -48,10 +59,12 @@ P.mobilize   = 36.5;
 P.demobilize = 9.8;
 P.wash       = [200 90]/60;       % per joint [long short]
 P.change     = 23.1;              % switch a lane between long and short
+P.short_lane = false;             % scenario: the last lane stays set up for short joints,
+                                  % the others for long (no changeovers)
 
 % Inspection hall: an open floor that joints roll through in order. Whoever is
 % free and qualified does the next step on a joint, wherever it lies.
-P.hall_space = 30;                % joints on the hall floor at once (gut)
+P.hall_space = 70;                % joints on the hall floor at once (company, 2026-11-03)
 P.hall_buffer = 20;               % joints out of the yard and not yet on the floor:
                                   % at the wash or washed, waiting for room (gut)
 P.floor_start = 15;               % joints on the floor at the start: never empty, usually not full
@@ -80,6 +93,9 @@ P.steps = {
   'Mark',     155.5,   1,     false,       true    % 19,22    laser marking, restamp
   'Report',   67,      2,     false,       false   % 14,23    report, report check
 };
+P.auto = {};                      % scenario: steps a machine does with no one at it, by
+                                  % name ('Clean', 'UT', ...), and 'Wash' for the wash
+                                  % unit; one machine per step, the same time
 
 % Repair at external workshops (§7). The repair time is drawn per order,
 % lognormal, fitted to inspection -> completed in Orders (median, p25-p75).

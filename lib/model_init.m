@@ -23,5 +23,10 @@ global_info.next_hall = 1;
 global_info.run = 0;                        % short joints sent in the yard's current run
 global_info.next_floor = 1;
 global_info.next_demand = 1;
+global_info.yard_out = zeros(0, 3);         % per hall joint the yard sends on: [time, received, order]
+global_info.floor_in = zeros(0, 2);         % per joint onto the floor from the wash: [time, order]
+global_info.hall_out = zeros(0, 3);         % per joint leaving the hall: [time, order, how 1-4]
+                                            % (order 0: back from repair, its order not kept)
+global_info.clear_at = nan;                 % drain test: when the hall was clear (P.stop_clear)
 global_info.STOP_AT = P.days*1440;
 global_info.DELTA_TIME = 0.25;  % 15 s

@@ -54,33 +54,23 @@ for k = 1:size(invariants, 1)
     fprintf('  %-20s %s = %d\n', invariants{k, 1}, strjoin(invariants{k, 2}, ' + '), y'*m0);
 end
 
-% Crew bound. Work that needs level L can only be done by people of level L
-% or higher, so for each L: joints/week <= (their minutes a week) / (minutes
-% of work per joint at level L or higher). The wash needs someone while it
-% runs; it counts as L0 work. Changeovers, mobilizing and walking are left
-% out, so the real number is lower.
+% Crew bound (crew_bound.m). Work that needs level L can only be done by
+% people of level L or higher, so for each L: joints/week <= (their minutes a
+% week) / (minutes of work per joint at level L or higher). One person mans
+% both wash lanes; scrapped joints skip steps. The L0 line is the whole
+% crew. Changeovers, mobilizing and walking are left out, so the real number
+% is lower.
 week = 5 * diff(P.shift);                                   % shift minutes a week, per person
-short = (1 - P.p_long)*P.mean_joints(2) / ((1 - P.p_long)*P.mean_joints(2) + P.p_long*P.mean_joints(1));
-wash = (1 - short)*P.wash(1) + short*P.wash(2);             % minutes manned per joint
-work = zeros(1, 4);
-for k = 1:size(P.steps, 1)
-    work(P.steps{k, 3} + 1) = work(P.steps{k, 3} + 1) + P.steps{k, 2}*P.pace/60;
-end
-work(1) = work(1) + wash;
+B = crew_bound(P);                                          % the work per joint: see crew_bound
 disp(' '); disp('Crew bound (joints a week):');
 fprintf('  %-6s %7s %16s %10s\n', 'level', 'people', 'min/joint >= L', 'bound');
-bound = inf(1, 4);
 for L = 0:3
-    people = sum(P.crew(L+1:end));
-    need = sum(work(L+1:end));
-    bound(L+1) = people*week / need;
-    fprintf('  L%-5d %7d %16.1f %10.0f\n', L, people, need, bound(L+1));
+    fprintf('  L%-5d %7d %16.1f %10.0f\n', L, sum(P.crew(L+1:end)), sum(B.work(L+1:end)), B.level(L+1));
 end
-[b, L] = min(bound);
-fprintf('  The crew can inspect at most %.0f joints a week (%.1f per man-hour); L%d is the limit.\n', ...
-        b, b / (sum(P.crew)*week/60), L - 1);
-fprintf('  The wash can wash at most %.0f a week (%d lanes, %.1f min a joint).\n', ...
-        P.wash_lanes*week/wash, P.wash_lanes, wash);
+fprintf('  The crew can inspect at most %.0f joints a week (%.1f per man-hour, %.1f crew min a joint).\n', ...
+        min(B.level), min(B.level) / (sum(P.crew)*week/60), B.minutes);
+fprintf('  The wash can wash at most %.0f a week (%d lanes, %.1f manned min a joint).\n', ...
+        B.wash_cap, P.wash_lanes, B.wash);
 
 % Traps. A trap that holds a token keeps one for ever. On the full net the
 % enumeration doesn't finish: the hall has one transition per qualified

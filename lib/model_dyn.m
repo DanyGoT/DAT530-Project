@@ -13,9 +13,13 @@ m0 = {'pAClock',1, 'pDClock',1, ...
       'pRMach',size(global_info.workshop{1}, 1), 'pRHb',size(global_info.workshop{2}, 1)};
 ft = {'tALong',P.unload, 'tAShort',P.unload, 'tABypass',P.unload, ...
       'tWMobilize',P.mobilize, 'tWDemobilize',P.demobilize};
-for k = 1:P.wash_lanes                  % lanes start set up for long
-    n = @(name) sprintf('%s_%d', name, k);
-    m0 = [m0, {n('pWLong'),1}];
+for k = 1:P.wash_lanes                  % lanes start set up for long,
+    n = @(name) sprintf('%s_%d', name, k); % the short lane (P.short_lane) for short
+    if P.short_lane && k == P.wash_lanes
+        m0 = [m0, {n('pWShort'),1}];
+    else
+        m0 = [m0, {n('pWLong'),1}];
+    end
     ft = [ft, {n('tWToLong'),P.change, n('tWToShort'),P.change, ...
                n('tWLong'),P.wash(1), n('tWShort'),P.wash(2)}];
 end

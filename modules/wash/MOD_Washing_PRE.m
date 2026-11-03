@@ -7,7 +7,9 @@ function [fire, transition] = MOD_Washing_PRE(transition)
 % nothing more fits before the shift ends, and the worker goes back to the
 % hall (MOD_Washing_POST).
 % Nine joints in ten are long, so lanes stay long and one at a time goes
-% over to short when a short order comes up.
+% over to short when a short order comes up. Scenarios: with P.short_lane the
+% last lane stays short and the others long; with 'Wash' in P.auto the unit
+% needs no one.
 
 global global_info
 P = global_info.P;
@@ -23,14 +25,16 @@ switch t
     case {'tWIn', 'tWOut'}
         fire = 1;
     case 'tWMobilize'
-        fire = ntokens('pWRack') >= P.wash_start && fits(P, P.mobilize + P.wash(1)) ...
-               && requestAR(P.wash_crew, 1);
+        fire = (ntokens('pWRack') >= P.wash_start || last_ones(P)) && fits(P, P.mobilize + P.wash(1));
+        if fire && not(ismember('Wash', P.auto)), fire = requestAR(P.wash_crew, 1); end
     case 'tWDemobilize'
         fire = ntokens('pWRack') == 0 || not(fits(P, max(P.wash)));
     case 'tWToLong'
-        fire = fits(P, P.change) && next_is('pWRack', 'long');
+        fire = fits(P, P.change) && next_is('pWRack', 'long') ...
+               && not(P.short_lane && lane == P.wash_lanes);
     case 'tWToShort'
-        fire = fits(P, P.change) && next_is('pWRack', 'short') && not(other_lane_short(lane));
+        fire = not(P.short_lane) && fits(P, P.change) && next_is('pWRack', 'short') ...
+               && not(other_lane_short(lane));
     case 'tWLong'                   % the next joint, if the lane is set up for it
         fire = fits(P, P.wash(1)) && next_is('pWRack', 'long');
         if fire, [fire, transition] = next_joint(transition); end
@@ -50,6 +54,13 @@ function yes = fits(P, minutes)
 % Work of this length can start now and still leave time to demobilize.
 now = mod(current_time(), 1440);
 yes = in_shift(P) && now + minutes <= P.shift(2) - P.demobilize;
+
+
+function yes = last_ones(P)
+% Drain test (P.stop_clear): the last joints on the rack are washed even if
+% fewer than P.wash_start, once the yard has sent all it has.
+global global_info
+yes = P.stop_clear && ntokens('pWRack') > 0 && global_info.next_hall > numel(global_info.hall);
 
 
 function yes = other_lane_short(lane)

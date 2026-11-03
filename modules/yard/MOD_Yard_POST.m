@@ -11,6 +11,8 @@ switch transition.name
     otherwise
         return
 end
+j = global_info.hall(global_info.next_hall);         % for days in the yard
+global_info.yard_out(end+1, :) = [current_time(), j.t, j.order];
 global_info.next_hall = global_info.next_hall + 1;
 if strcmp(transition.name, 'tYShort') && global_info.run < global_info.P.short_run
     next_short();

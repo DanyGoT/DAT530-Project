@@ -1,6 +1,6 @@
 # Pipe yard data (masked)
 
-Exports from the pipe yard's tracking system, Feb 2020 – Oct 2026. The files in the top folder were exported on 2026-10-23. `Old data/` holds an earlier export (2026-10-22) that `Old data/reference_stats.md` is based on.
+Exports from the pipe yard's tracking system, Feb 2020 – Oct 2026. The files in the top folder were exported on 2026-10-23, except `DT_Items.csv` and the `Repair_YN` column of `DTs.csv`, which come from a 2026-11-03 export (masked by `../scripts/mask_dt_items.py`). `Old data/` holds an earlier export (2026-10-22) that `Old data/reference_stats.md` is based on.
 
 Customers, rigs and anything else that would identify a customer are replaced by codes. The codes are the same in every file, so joins still work.
 
@@ -10,7 +10,7 @@ Customers, rigs and anything else that would identify a customer are replaced by
 |---|---|---|
 | `C01`–`C38` | Customer names | Numbered by joints received, `C01` the largest |
 | `P01`–`P43` | Item-number prefixes | `P01-578DP.05` = prefix `P01`, then size and type (5 7/8" drill pipe), then set `.05`. Prefixes mostly follow the customer but not one to one. |
-| `J000001`… | Joint serial numbers | Same joint, same code in `serial_history` and `workstation_items` |
+| `J000001`… | Joint serial numbers | Same joint, same code in `serial_history`, `workstation_items` and `DT_Items`. `J060478` and up are joints found only in `DT_Items`. |
 | `R001`–`R184` | Rigs, fields, countries, other companies' sites | Used in location columns. Spelling variants of one place got separate codes, because the source has them as separate values. |
 
 These names are left as they are, because they don't identify a customer. Yard locations: Inspection, Rig_Ready, Yard, Hardbanding, Scrap, ScrapOCTG, Limited_Service, On_Hold, Booked, Shipped. Workshops: Norse, the main machining and repair shop. Wepco and Stamas, which do machining and hardbanding. Not known: ITM and IPC. Bases and yards: Kverneland, Mongstad, Hammerfest, Ogna.
@@ -92,7 +92,7 @@ These names are left as they are, because they don't identify a customer. Yard l
 | `Rack Location` | Always empty, so rack occupancy can't be rebuilt back in time |
 | `Transaction type` | Relocation, Receiving (also spelled Receive), Shipping. A few rows are blank. |
 | `Order No` | Order ID |
-| `DT No` | Delivery ticket. **On Shipping rows this is the joint's previous ticket**, because the row is a snapshot from before the change. Don't join shipping to `DTs.csv` on it. |
+| `DT No` | Delivery ticket. **On a Shipping row this is a ticket the joint has already been on**, not a new one. Up to 2024 a Shipping row was written when the joint came **back** on that ticket, a couple of days before the next Receiving. From 2025 most are written at the next dispatch, with the previous ticket. Take dispatch dates from `DTs.csv` via this number, not from the row's timestamp. 97% agree with `DT_Items`. |
 | `Rig` | Rig or field (masked) |
 | `Site` | Base: Kverneland, Mongstad, Hammerfest |
 | `Date` | Meaning not known |
@@ -106,6 +106,19 @@ These names are left as they are, because they don't identify a customer. Yard l
 | `Item_No`, `Quantity`, `Equipment` | What was shipped. `Equipment` is often empty. |
 | `DT_Date` | Delivery date |
 | `CreationTimestamp` | Ticket created, usually the day before or the same day |
+| `Repair_YN` | **Yes = internal ticket**: not customer-facing, used for repairs and moves between sites and outside companies (the name is misleading). No = customer delivery. From the 2026-11-03 export. |
+
+### `DT_Items.csv`: joints on each delivery ticket
+
+UTF-16 like `DTs.csv`. **Cut off at the export's 2 MB limit**: it stops in DT 12006 (2023-08), so 2020 → Aug 2023 only.
+
+| Column | Meaning |
+|---|---|
+| `Line` | Line on the ticket |
+| `DT_no` | Delivery ticket, links to `DTs.DT_No` |
+| `Serial_No` | Joint (masked). Blank on a few junk rows. |
+| `Last_inspection` | The joint's last inspection date before the ticket, dd.mm.yyyy (sometimes dd/mm/yyyy) |
+| `Last_Inspection_Order` | Always empty |
 
 ### `Location.csv`: rack snapshot, 2026-10-23
 

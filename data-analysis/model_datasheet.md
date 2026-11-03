@@ -2,7 +2,7 @@
 
 Concrete numbers for building the Petri net. Everything is in one place, and each number names where it came from.
 
-- **Our data**: the masked exports in `masked/` (exported 2026-10-23). Unless stated otherwise, the **window is 2025-01-01 → 2026-10-22**: 472 weekdays, 95 weeks. That is the recent steady state. Volumes and routing have shifted since 2020, so `Old data/reference_stats.md` (all years) gives different numbers in places.
+- **Our data**: the masked exports in `masked/` (exported 2026-10-23). Unless stated otherwise, the **window is 2025-01-01 → 2026-10-22**: 472 weekdays, 95 weeks. That is the recent steady state. Volumes and routing have shifted since 2020, so `Old data/reference_stats.md` (all years) gives different numbers in places. `DT_Items.csv` and the `Repair_YN` column of `DTs.csv` come from a second export (2026-11-03), masked with the same key (§12).
 - **2021 report**: `../litterature/pipe_simulators-1.pdf` (Afzali et al., DAT530 2021, same company). It is the **only** source of task-level times inside the hall. It was written in 2021 and has not been checked against our data.
 - Weekday shares run Mon → Sun. "pN" means the Nth percentile. Days are calendar days.
 
@@ -28,8 +28,13 @@ Concrete numbers for building the Petri net. Everything is in one place, and eac
 | Drill pipe Rig Return outcome | machining 59%, hardbanding 12%, scrap 6.6% | §6 | high |
 | Workshop next hop | Norse/Wepco → Rig_Ready ≈ 52%, → back to Inspection ≈ 11%, → another workshop 12–15% | §7 | low |
 | Workshop turnaround (inspection → machining done) | median 31 d (n=152) / time in Norse median 60 d | §7 | low |
-| Delivery tickets per weekday | mean 4.9, var 14 (NB r≈2.6); weighted to Thu–Fri | §8 | high |
-| Joints per delivery ticket | median 13, p75 48, p90 98 | §8 | high |
+| Customer delivery tickets per weekday | mean 4.1, var 12 (NB r≈2.2); weighted to Thu–Fri | §8 | high |
+| Joints per customer ticket | mean 35, median 10, p75 43, p90 100 | §8 | high |
+| Internal tickets (`Repair_YN` = Yes) | 0.74 per weekday, median 42 joints; not demand on stock | §8 | high |
+| Customer tickets inspected to order | 34% of tickets have every joint inspected ≤ 3 d before; 25% of shipped joints | §12 | medium |
+| Rig_Ready dwell, inspection → ticket (stock joints) | median 29 d (p25 10, p75 91, p90 195) | §12 | medium |
+| Time at the rig, ticket → back in the yard | median 63 d (p25 29, p75 179), 83% come back (2020–23) | §12 | medium |
+| Receipts that are not new pipe | 20% re-received from our own stock, 3% back from a workshop | §12 | medium |
 | Yard capacity | 250 racks, 17,291 joints in stock (snapshot); Rig_Ready 219 racks / 11,945 joints | §9 | high |
 
 ---
@@ -49,7 +54,9 @@ Concrete numbers for building the Petri net. Everything is in one place, and eac
 Yard locations used in `serial_history`: Inspection, Rig_Ready, Booked, Scrap, ScrapOCTG, Limited_Service, On_Hold, Yard, Shipped.
 Workshops: Norse (main machining/repair shop), Wepco and Stamas (machining and hardbanding), Hardbanding. ITM and IPC are unknown.
 
-**"Inspection" is a status, not the hall.** In `serial_history` a joint stays "Inspection" from receiving until it is moved. That covers the queue, the hall and often storage afterwards: 75% of joints leave "Inspection" through a Shipping event. Use `workstation_items` and `Orders` for the hall itself.
+**"Inspection" is a status, not the hall.** In `serial_history` a joint stays "Inspection" from receiving until it is moved. That covers the queue, the hall and often storage afterwards: 75% of joints leave "Inspection" through a Shipping row, mostly because the status is never moved before the joint ships. Use `workstation_items` and `Orders` for the hall itself.
+
+**A Shipping row is not always the dispatch** (§12). Up to 2024 it was written when the joint came back from the rig, a couple of days before the next Receiving, and carries the ticket the joint left on. From 2025 most are written at dispatch. Take dispatch dates from the ticket (`DT_Items`, or the Shipping row's DT No looked up in `DTs.csv`), not from the row's timestamp.
 
 ---
 
@@ -272,6 +279,7 @@ Compared with all years (`reference_stats.md`: machining 35%, HB 8%, scrap 3.5%)
 `serial_history` is noisy:
 - The current location is blank on 37% of rows.
 - Shipping is used both for **rig deliveries and for transfers to workshops**.
+- Up to 2024 a Shipping row was written when the joint came **back**, not when it left (§1, §12). Stays that end in "Shipped" therefore include the time at the rig for those years: use §12 for Rig_Ready dwell, not the "Rig_Ready, then shipped" row below.
 - "Inspection" is a status (see §1).
 
 These numbers show the **shape** of the flow. Don't treat them as exact rates.
@@ -325,14 +333,24 @@ Joints sitting at each location at the end of the data (open stays): Inspection 
 
 ## 8. Deliveries (`DTs.csv`)
 
-2343 tickets, 87,953 joints in the window. (Received in the same window: 122,776. Deliveries are under-recorded, see `reference_stats.md` §4.)
+2343 tickets, 87,953 joints in the window. (Received in the same window: 122,776, but about a fifth of those are our own stock received again, §12. Deliveries are under-recorded, see `reference_stats.md` §4.)
 
-- Tickets per weekday: mean 4.93, var 14.45 (NB r≈2.55, p≈0.34); none on 7% of weekdays. Joints per weekday: mean 186, p90 456.
-- Joints per ticket: median 13, p25 2, p75 48, p90 98, max 632.
+`Repair_YN` (2026-11-03 export) splits them in two. **Yes** marks an **internal** ticket: not customer-facing, used for repairs and moves between sites and outside companies. The name is misleading. Only customer tickets are demand on the yard's stock.
+
+| | tickets | joints | per weekday: mean | var | NB r | joints/ticket: mean | median | p75 | p90 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Customer (No) | 1958 | 69,338 | 4.11 | 11.9 | 2.2 | 35.4 | 10 | 43 | 100 |
+| Internal (Yes) | 348 | 17,203 | 0.74 | 1.7 | 0.6 | 49.4 | 42 | 59 | 94 |
+| Blank | 34 | 1,317 | 0.07 | | | 38.7 | 10 | 38 | 83 |
+
+All tickets together: mean 4.93 a weekday, var 14.45 (NB r≈2.55); none on 7% of weekdays; joints per ticket median 13, p90 98, max 632.
 
 | | Mon | Tue | Wed | Thu | Fri | Sat | Sun |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| % tickets | 16.3 | 18.4 | 19.5 | 21.3 | 23.8 | 0.4 | 0.3 |
+| % tickets, all | 16.3 | 18.4 | 19.5 | 21.3 | 23.8 | 0.4 | 0.3 |
+| % tickets, customer | 16.5 | 18.6 | 19.2 | 20.9 | 23.9 | 0.5 | 0.4 |
+
+By equipment (all tickets):
 
 | Equipment | tickets | joints | median/ticket |
 |---|---:|---:|---:|
@@ -348,6 +366,8 @@ Joints sitting at each location at the end of the data (open stays): Inspection 
 ---
 
 ## 9. Yard capacity (`Location.csv`, snapshot 2026-10-23)
+
+The 2026-11-03 snapshot (unmasked, `data-03-11-2026/`) is close to it: Rig_Ready 11,622 joints, 16,621 in total.
 
 | Area | racks | joints | empty racks | median rows per floor |
 |---|---:|---:|---:|---:|
@@ -392,15 +412,61 @@ Non-empty racks hold a median of 90 joints (p90 169). A rack's physical maximum 
   - pipe length
   - worker headcount, shifts and certificate levels
   - rack capacity in joints
-  - time spent at the rig
+
+  Time at the rig used to be on this list; `DT_Items` gives it now (§12).
 
   For hall, washing and worker levels the only source is the 2021 report.
 - `calc_Qty_*` is the **planned** routing; what was actually done may differ.
 - Machining and HB completion dates are almost never filled in after mid-2025.
 - The share of Rig Return orders with an inspection date fell to 75% from July 2026, so recent queue numbers look worse than they are.
-- `serial_history`: see §7. `DT No` on Shipping rows is the previous ticket.
+- `serial_history`: see §7. `DT No` on a Shipping row is a ticket the joint has been on (97% agree with `DT_Items`), not a new ticket. Up to 2024 the row is written when the joint comes back on that ticket; from 2025 mostly at the next dispatch (§12).
 - Window effects: dwell times near the end of the window are cut off (open stays are excluded from the dwell tables).
 - Time scale: values run from 6 s (shortest task) to more than 100 d (workshop storage). The 2021 group had to rescale because simulating in seconds was too slow. In a yard-level model with an abstracted hall, a unit of **hours or minutes** is easier to work with.
+
+---
+
+## 12. Joints on tickets (`DT_Items`, `serial_history`)
+
+Script: `scripts/deliveries.py`.
+
+`DT_Items` lists the joints on each ticket, with each joint's last inspection date. The export stops at its 2 MB limit, in DT 12006 (2023-08), so it covers **2020 → Aug 2023 only** (893 customer tickets, 30,694 joints). For the window, joint → ticket pairs come from the DT No on Shipping rows instead (§11). Checked against `DT_Items`, 97% of those are right (n = 22,802). But a pair only shows up once the joint has a later Shipping row, so the window sample leans toward joints that move often: it has 55% of 2025 customer-ticket joints and 23% of 2026's.
+
+**Shipping rows over time**:
+
+| | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Followed by a Receiving within 5 d | 72% | 80% | 68% | 71% | 73% | 23% | 18% |
+| A ticket for the same item within 3 d | 34% | 24% | 23% | 22% | 25% | 46% | 62% |
+
+Up to 2024 the row marks the return, and from 2025 mostly the dispatch.
+
+**Customer tickets** (Repair_YN = No):
+
+| | 2020–23 (`DT_Items`) | 2025–26 (Shipping rows) |
+|---|---|---|
+| Inspection → ticket, all joints | median 28 d (p25 7, p75 71, p90 151) | median 12 d (p25 2, p75 59, p90 163) |
+| Same, stock joints only (> 3 d) | median 36 d (p25 17, p75 85, p90 165) | median 29 d (p25 10, p75 91, p90 195) |
+| Joints inspected ≤ 3 d before the ticket | 15% | 25% |
+| Tickets with every joint fresh / none / mixed | 14% / 72% / 14% | 34% / 55% / 12% |
+| Last receive before the ticket was from our own yard / a workshop | 16% / 3% | 27% / 5% |
+| Ticket → back in the yard | median 63 d (p10 3, p25 29, p75 179, p90 391); 83% came back | median 95 d (p25 25, p75 203); 68% so far |
+
+So there are **two kinds of customer ticket**. About a third are inspected to order: every joint goes through the hall within 3 days of shipping. That fits the "quick" scopes of §3 (RtoR, re-inspection), which skip the queue (§4) and are mostly received from our own yard. They seem to be pulled through the hall by a waiting ticket. The scope of the order behind each fresh joint hasn't been checked. The rest are picked from stock that has waited about a month. Time at the rig is long next to a one-week run: a joint shipped in the run won't come back within it.
+
+**Internal tickets** (Repair_YN = Yes) go to and come back from outside companies and other customers' sites. Only 5% of their joints had been at Norse, Wepco, Stamas or Hardbanding in the 60 days before, so they are **not the transport to our workshops**. Those moves are Relocations.
+
+**Receipts that are not new pipe** (Receiving rows 2025–26, n = 51,094): 77.4% come from a rig or another outside place, 19.8% from our own yard ("Yard": stock received again for another inspection) and 2.8% from a workshop. By scope:
+
+| Scope | own yard | rig / outside | workshop |
+|---|---:|---:|---:|
+| Rig Return | 0% | 100% | 0% |
+| Inspection | 42% | 56% | 2% |
+| Re Inspection | 64% | 2% | 34% |
+| VTI | 71% | 27% | 2% |
+| RtoR + Reinsp | 80% | 19% | 1% |
+| RtoR | 100% | 0% | 0% |
+
+Receipts from a workshop are joints the workshop sends back for inspection. A model that sends repaired joints back to the hall itself should leave them out of its arrivals.
 
 ---
 

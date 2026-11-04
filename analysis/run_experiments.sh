@@ -33,6 +33,19 @@ RUNS=(
   "floor50    | 3 | 1 2 3 | 'hall_space', 50"
   "floor90    | 3 | 1 2 3 | 'hall_space', 90"
 
+  # Logistics and expansion (P.certified, P.forklifts, P.halls), 3 days. The
+  # backlog keeps the halls fed, so throughput is capacity. 17/20 people:
+  # one L2 and one L3 can't check and scan for two halls (crew_bound).
+  "lbase      | 3 | 1 2 3 |"                                  # the baseline for these
+  "cert2      | 3 | 1 2 3 | 'certified', [1 1 0 0]"
+  "cert4      | 3 | 1 2 3 | 'certified', [3 1 0 0]"
+  "fork3      | 3 | 1 2 3 | 'forklifts', 3"
+  "hall2      | 3 | 1 2 3 | 'halls', 2"
+  "crew17     | 3 | 1 2 3 | 'crew', [7 7 2 1]"
+  "hall2_c17  | 3 | 1 2 3 | 'halls', 2, 'crew', [7 7 2 1]"
+  "hall2_c20  | 3 | 1 2 3 | 'halls', 2, 'crew', [8 8 2 2], 'certified', [3 1 0 0]"
+  "hall2_c20f3| 3 | 1 2 3 | 'halls', 2, 'crew', [8 8 2 2], 'certified', [3 1 0 0], 'forklifts', 3"
+
   # Not in the overnight batch (pick by tag).
   "base_again | 7  | 1         |"      # reproducibility: the same as base, seed 1
   "base28     | 28 | 1 2 3     |"

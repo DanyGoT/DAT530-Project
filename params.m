@@ -75,7 +75,8 @@ P.crew = [5 5 1 1];               % people per level L0-L3, one pool for hall, w
                                   % hall alone was calibrated with, plus ~5 people's worth of
                                   % forklift and lorry work at the gut yard times below
                                   % (3 people per lorry job). To be calibrated.
-P.certified = [3 1 0 0];          % of those, how many hold a forklift certificate (gut)
+P.certified = [2 1 0 0];          % of those, how many hold a forklift certificate: 2-4 people
+                                  % do forklift work (the company, 2026-11-04); 3 made up
 % The 2021 task times add up to 25 min of work per joint; the real work goes
 % faster. Calibrated to the data's median of ~800 inspected a week with this
 % crew (2-day probe at pace 0.73: ~690 a week, crew ~95% busy). That is ~2.9

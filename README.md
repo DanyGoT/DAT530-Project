@@ -1,9 +1,10 @@
 # DAT530-Project
 
 A GPenSIM model of the Ocean IMR pipe yard, at the level of single joints:
-joints arrive, wait in the yard, are washed, inspected on the hall floor by a
-small team, and go to stock, a workshop or scrap. Stock is shipped on delivery
-tickets.
+joints arrive, wait in one of two yards, are washed, inspected on the hall
+floor, and go to stock, a workshop or scrap. Stock is shipped on delivery
+tickets. One pool of workers does the hall, the wash and the forklift work in
+the yards.
 
 ```
 Arrival ──▶ Yard ──▶ Washing ──▶ Inspection hall ──▶ Yard (stock / scrap) ──▶ Departure
@@ -43,15 +44,15 @@ order, timing), `COMMON_PRE` decides *what* (which joint, which colours).
 
 | Module | Input ports | Output ports |
 |---|---|---|
-| Arrival | — | `tALong`, `tAShort`, `tABypass` |
-| Yard | `tYInLong`, `tYInShort`, `tYInBypass`, `tYInOk`, `tYInScrap`, `tYInRepaired`, `tYRoom` (a credit), `tYOrder` (a joint asked for) | `tYLong`, `tYShort` (to the wash), `tYShip` (a joint) |
+| Arrival | — | `tALong`, `tAShort`, `tABypass` (to Main), `tACHall`, `tACBypass` (to Coop) |
+| Yard (Main and Coop) | `tYInLong`, `tYInShort`, `tYInBypass`, `tYInCHall`, `tYInCBypass`, `tYInOk`, `tYInOkCoop`, `tYInScrap`, `tYInRepaired`, `tYRoom` (a credit), `tYOrder`, `tYOrderCoop` (a joint asked for) | `tYLong`, `tYShort` (to the wash), `tYShip`, `tYShipCoop` (a joint) |
 | Washing | `tWIn` (from `pYW` onto its rack) | `tWOut` (washed, to `pWI`) |
 | Inspection | `tIIn` (washed), `tIInRepair` | `tIOk`, `tIScrap`, `tIMach`, `tIHb`, `tIRoom` (the credit back) |
 | Repair | `tRInMach`, `tRInHb` | `tRMachHall`, `tRHbHall`, `tRMachReady`, `tRHbReady` |
 | Departure | `tDShip` | `tDTicket` |
 
 A connector's places are named by the two modules' letters: `pAYLong`
-(Arrival → Yard), `pYW`, `pWI`, `pIYOk`, `pIYScrap`, `pIYRoom`, `pIRMach`,
+(Arrival → Yard; `pAYCHall` for Coop), `pYW`, `pWI`, `pIYOk`, `pIYScrap`, `pIYRoom`, `pIRMach`,
 `pIRHb`, `pRI`, `pRYReady`, `pDYOrder`, `pYDOut`.
 
 ## How it works
@@ -69,17 +70,47 @@ A connector's places are named by the two modules' letters: `pAYLong`
   rig-ready stock, and the workshops hold the joints the hall sent them over
   the last two years whose repair isn't done yet (~1400 machining, ~900
   hardbanding at seed 4).
-- **Token = one joint.** In the yard a joint's kind is the place it is in
-  (`pYLong`, `pYShort`, `pYReady`). In the wash and the hall it carries colours:
+- **Token = one joint.** In the yards a joint's kind is the place it is in
+  (`pYLong`, `pYShort`, `pYReady`, `pCHall`, `pCReady`). In the wash and the hall it carries colours:
   its length, what inspection will find (`ok`, `mach`, `hb`, `scrap`), its order,
   and `scrapped` once inspection has found the scrap. Joints for the workshops
   keep only their order. GPenSIM copies every coloured token after each firing,
   so colourless joints elsewhere keep runs fast.
-- **One shared crew.** Workers L0-L3 are GPenSIM resources (`P.crew`, now
-  7 people). A higher level can do lower-level work (`requestAR`, lowest level
+- **One pool of workers.** Workers L0-L3 are GPenSIM resources (`P.crew`,
+  now 12 people); `P.certified` of them hold a forklift certificate (resources
+  `L0T`-`L3T`, the others `L0`-`L3`). Hall work takes those without a
+  certificate first, so the drivers stay free. A higher level can do lower-level work (`requestAR`, lowest level
   asked first), but not while a joint waits at a step of their own level: the
   one L3 stays free for UT, the one L2 for threads and reports. The same
   people inspect and man the wash, and joints per man-hour counts them all.
+- **Two yards and their forklifts.** Main lies by the hall; Coop is ~8 min
+  away. A receipt is unloaded at Coop with `P.coop_in` (per order), and a
+  hall order's rig-ready joints are stored there with `P.coop_ready`. Every
+  move of a joint in a yard is forklift work: a forklift at that yard
+  (`P.forklifts`, tokens in `pYFork`/`pCFork`) and a certified driver, plus
+  `P.lorry_helpers` people whenever a lorry is loaded or unloaded (2021
+  report: three people at a lorry). Times are per bundle (`P.t_unload`, ...,
+  `P.bundle` joints). Forklift work goes before hall work: when it finds no
+  driver free, the hall and the wash leave the certified workers alone for
+  the next step, and when a lorry lacks helpers, L0 and L1 too, so the lorry
+  crew gathers as people come free. At Main, feeding the wash goes before unloading and
+  storing; other forklift jobs take turns. Helpers at a lorry are L0/L1
+  without a certificate first. (No GPenSIM priorities: setting any makes GPenSIM try every
+  transition in a fixed order, and the hall's dispatch would change.)
+  - Hall bundles at Coop are fetched to Main by lorry when they are within
+    `P.fetch_ahead` joints of the front of the hall queue; the hall waits if
+    one isn't there in time.
+  - Ok joints for Coop go from the hall straight onto a lorry, not into a
+    rack at Main first.
+  - A joint asked for comes from Coop with Coop's share of the stock.
+  - Lorries between the yards are rented: never waited for, only the drive
+    (`P.lorry_drive`). A forklift drives over (`P.fork_drive`, with its
+    driver) when `P.coop_batch` joints of work wait at Coop, or the first
+    has waited `P.coop_wait` min, and comes back when Coop has none. At most
+    one forklift is at Coop.
+  - Most times are guesses (marked "gut" in `params.m`): our data has
+    nothing on the yards. Repair transport (to and from the workshops) is
+    only counted on the way back (`tYInRepaired`).
 - **Short runs.** The yard sends hall joints in arrival order, whole orders at
   a time, except that short orders go in runs: when a short order is done and
   the run is under `P.short_run` joints (23), the next short order already in

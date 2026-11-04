@@ -9,6 +9,8 @@ function [fire, transition] = COMMON_PRE(transition)
 %   Yard -> Washing -> Inspection  len ('long'/'short'), find ('ok', 'mach',
 %                                  'hb' or 'scrap') and 'order<n>'
 %   Inspection -> Repair           'order<n>' only
+%   Inspection -> Yard (ok)        'order<n>' (none if back from repair): the yard
+%                                  stores it at Main or Coop by order (to_coop)
 %   Repair -> Inspection           'ok' 'repaired'
 %   everything else                no colours (credits, orders, stock)
 % A port that takes a coloured joint picks it and gives its output exactly the
@@ -38,9 +40,9 @@ switch t
         transition.override = 1;
 
     % Leaving the hall, by what inspection found.
-    case 'tIOk'
-        [id, ~] = find_token('pIDone', @(tok) has_color(tok.color, 'ok'));
-        [fire, transition] = pick(transition, id, {});
+    case 'tIOk'                     % keeps its order: the yard stores it by order
+        [id, c] = find_token('pIDone', @(tok) has_color(tok.color, 'ok'));
+        [fire, transition] = pick(transition, id, c(strncmp(c, 'order', 5)));
     case 'tIScrap'
         [id, ~] = find_token('pIDone', @(tok) has_color(tok.color, 'scrapped'));
         [fire, transition] = pick(transition, id, {});
@@ -55,6 +57,13 @@ switch t
     case 'tRInHb'
         [id, ~] = find_token('pIRHb', @(tok) true);
         [fire, transition] = pick(transition, id, {});
+    case 'tYInOk'                   % into a rack at Main, colourless
+        [id, ~] = find_token('pIYOk', @(tok) not(to_coop(tok.color)));
+        [fire, transition] = pick(transition, id, {});
+    case 'tYInOkCoop'               % onto a lorry to Coop, colourless
+        [id, ~] = find_token('pIYOk', @(tok) to_coop(tok.color));
+        [fire, transition] = pick(transition, id, {});
+
     case {'tRMachHall', 'tRHbHall'}
         transition.new_color = {'ok', 'repaired'};
         transition.override = 1;
@@ -73,3 +82,10 @@ function [fire, transition] = to_repair(transition, color)
 fire = id > 0;
 if not(fire), return, end
 [~, transition] = pick(transition, id, {sprintf('order%d', order_of(c))});
+
+
+function yes = to_coop(colors)
+% The joint's order stores its rig-ready joints at Coop. Joints back from
+% repair carry no order and go to Main.
+global global_info
+yes = any(strncmp(colors, 'order', 5)) && global_info.to_coop(order_of(colors));

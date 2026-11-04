@@ -42,6 +42,7 @@ invariants = {
   'hall credits', {'pYRoom', 'pYW', 'pWRack', 'pWDone', 'pWI', 'pIRoom', 'pIYRoom'}
   'arrival clock', {'pAClock'}
   'ticket clock',  {'pDClock'}
+  'forklifts',     {'pYFork', 'pCFork'}
 };
 for k = 1:P.wash_lanes
     invariants(end+1, :) = {sprintf('wash lane %d set-up', k), {sprintf('pWLong_%d', k), sprintf('pWShort_%d', k)}};

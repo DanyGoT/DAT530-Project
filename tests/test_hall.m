@@ -31,10 +31,10 @@ assert(timesfired('tWIn') == timesfired('tYLong') + timesfired('tYShort') - ntok
 assert(timesfired('tIIn') + ntokens('pWI') + ntokens('pWDone') == washed, 'joints lost between wash and hall');
 left = sum(cellfun(@timesfired, {'tIOk', 'tIMach', 'tIHb', 'tIScrap'}));
 assert(P.floor_start + timesfired('tIIn') == on_floor + left, 'joints lost in the hall');
-assert(timesfired('tIOk') == timesfired('tYInOk') + ntokens('pIYOk') && ...
+assert(timesfired('tIOk') == timesfired('tYInOk') + timesfired('tYInOkCoop') + ntokens('pIYOk') && ...
        timesfired('tIScrap') == timesfired('tYInScrap') + ntokens('pIYScrap'), 'joints lost on the way to the yard');
 
-for p = {'pYLong', 'pYShort', 'pYReady', 'pYScrap', 'pIYOk', 'pIYScrap'}
+for p = {'pYLong', 'pYShort', 'pYReady', 'pYScrap', 'pCHall', 'pCReady', 'pYToCoop', 'pIYScrap'}
     bank = get_place(p{1}).token_bank;
     if isempty(bank), continue, end
     assert(all(cellfun(@isempty, {bank.color})), [p{1}, ' has coloured tokens']);

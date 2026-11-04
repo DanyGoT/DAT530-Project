@@ -18,7 +18,6 @@ P.receipts_weekday = [21.0 21.6 20.4 17.8 16.7];   % % of receipts Mon-Fri
 P.p_long = 0.51;                  % DP, TBG, LS are long (13-14 m); HW, DC, NM short (9.5 m)
 P.mean_joints = [66 8];           % mean joints per receipt [long short]
 P.p_bypass = 0.23;                % Mobilization, RFID pairing, ...: storage only, no hall
-P.unload = 0.5;                   % per joint
 P.short_run = 23;                 % short joints the yard sends in one run, whole orders
                                   % (hall data: ~1 long/short switch a day, runs of 3 orders, 23 joints)
 P.backlog = 650;                  % hall joints already queued in the yard at the start
@@ -68,9 +67,13 @@ P.hall_space = 70;                % joints on the hall floor at once (company, 2
 P.hall_buffer = 20;               % joints out of the yard and not yet on the floor:
                                   % at the wash or washed, waiting for room (gut)
 P.floor_start = 15;               % joints on the floor at the start: never empty, usually not full
-P.crew = [2 3 1 1];               % people per level L0-L3, one shared crew for hall and wash
-                                  % (4-7 seen at work in the hall; the work is ~26% L0,
-                                  % 58% L1, 16% L2/L3)
+P.crew = [5 5 1 1];               % people per level L0-L3, one pool for hall, wash and yard
+                                  % (4-7 seen at work in the hall, others elsewhere; the hall
+                                  % work is ~26% L0, 58% L1, 16% L2/L3). 12 people: the 7 the
+                                  % hall alone was calibrated with, plus ~5 people's worth of
+                                  % forklift and lorry work at the gut yard times below
+                                  % (3 people per lorry job). To be calibrated.
+P.certified = [3 1 0 0];          % of those, how many hold a forklift certificate (gut)
 % The 2021 task times add up to 25 min of work per joint; the real work goes
 % faster. Calibrated to the data's median of ~800 inspected a week with this
 % crew (2-day probe at pace 0.73: ~690 a week, crew ~95% busy). That is ~2.9
@@ -96,6 +99,33 @@ P.steps = {
 P.auto = {};                      % scenario: steps a machine does with no one at it, by
                                   % name ('Clean', 'UT', ...), and 'Wash' for the wash
                                   % unit; one machine per step, the same time
+
+% Yard and logistics. Two yards: Main (by the hall) and Coop (~8 min walk
+% away, not in the system). Ogna and the named places are left out. Every
+% move of a joint in a yard is forklift work: a certified worker from the pool
+% and a forklift at that yard. Loading or unloading a lorry also needs
+% P.lorry_helpers more people (2021 report: "two on the truck, one on the
+% electric truck"). Lorries between the yards are rented: no waiting for one,
+% no limit, only the drive. Forklift work goes before hall work.
+% Times are per bundle of P.bundle joints; the model works per joint.
+P.forklifts = 2;                  % they start at Main
+P.lorry_helpers = 2;              % people besides the driver at a lorry (2021 report)
+P.bundle = 6;                     % joints per forklift lift (gut; the 2021 report: "it varies")
+P.t_unload  = 5;                  % lorry -> ground, per bundle (2021 report: ~5 min)
+P.t_load    = 5;                  % ground -> lorry, per bundle (gut: as unloading)
+P.t_store   = 4;                  % rig-ready into a rack, per bundle (gut)
+P.t_unstore = 4;                  % out of a rack, per bundle (gut)
+P.t_feed    = 3;                  % yard -> wash rack, per bundle (gut)
+P.lorry_drive = 10;               % Main <-> Coop by lorry (gut; 8 min on foot)
+P.fork_drive  = 15;               % a forklift driven between the yards, one way (gut: slow)
+P.coop_in    = 0.2;               % share of receipts unloaded at Coop, per order (gut);
+                                  % hall bundles there are fetched to Main by lorry
+P.coop_ready = 0.15;              % share of hall orders whose rig-ready joints go to Coop
+                                  % (gut; the 'Temp' racks hold ~12% of rig-ready stock)
+P.fetch_ahead = 150;              % a Coop bundle is fetched when it is within this many
+                                  % joints of the front of the hall queue (gut: ~a day)
+P.coop_batch = 20;                % joints of work waiting at Coop before a forklift goes
+P.coop_wait  = 60;                % ... or minutes the first of them has waited (gut)
 
 % Repair at external workshops (§7). The repair time is drawn per order,
 % lognormal, fitted to inspection -> completed in Orders (median, p25-p75).

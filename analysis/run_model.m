@@ -33,22 +33,36 @@ lanes = 1:P.wash_lanes;
 Y.inspected  = sum(n) * week;
 Y.per_hour   = sum(n) / (sum(P.crew) * work/60); % joints per man-hour, whole crew
 Y.busy       = sum(RU(:, 2)) / (sum(P.crew) * work);
-for L = 0:3                                      % busy share per level
-    i = find(strcmp(levels, sprintf('L%d', L)));
+for L = 0:3                                      % busy share per level, with or without certificate
+    i = ismember(levels, {sprintf('L%d', L), sprintf('L%dT', L)});
     Y.(sprintf('busy_L%d', L)) = nan;
-    if not(isempty(i)) && P.crew(L+1) > 0
-        Y.(sprintf('busy_L%d', L)) = RU(i, 2) / (P.crew(L+1) * work);
+    if P.crew(L+1) > 0
+        Y.(sprintf('busy_L%d', L)) = sum(RU(i, 2)) / (P.crew(L+1) * work);
     end
 end
-Y.yard_queue = ntokens('pYLong') + ntokens('pYShort');   % hall joints still in the yard at the end
+certified = endsWith(levels, 'T');
+Y.busy_cert  = sum(RU(certified, 2)) / max(1, sum(P.certified) * work);   % the forklift drivers
+% Forklift work: minutes the forklifts were in use (jobs and drives between
+% the yards), and person-minutes of yard work (driver, and helpers at lorries).
+W = yard_work(P);
+jobs = cellfun(@timesfired, W.name);
+Y.fork_busy  = sum(jobs .* W.minutes) / (P.forklifts * work);
+Y.yard_hours = sum(jobs .* W.minutes .* (1 + P.lorry_helpers * W.lorry)) / 60 * week;
+Y.fork_trips = timesfired('tYForkToCoop') * week;
+Y.from_coop  = (timesfired('tYFromCoopLong') + timesfired('tYFromCoopShort')) * week;
+Y.gate       = av_tokens(sim, {'pAYLong', 'pAYShort', 'pAYBypass', 'pAYCHall', 'pAYCBypass'});  % waiting to be unloaded
+% Hall joints not yet sent to the wash at the end: at the gate, at either
+% yard, or on a lorry from Coop.
+Y.yard_queue = sum(cellfun(@ntokens, {'pAYLong', 'pAYShort', 'pAYCHall', 'pYLong', 'pYShort', 'pCHall', 'pYToMain'}));
 Y.waiting    = av_tokens(sim, {'pWI'});          % washed, waiting for room on the floor
 Y.free_floor = av_tokens(sim, {'pISpace'});
 Y.changes    = sum(arrayfun(@(k) timesfired(sprintf('tWToShort_%d', k)) + ...
                              timesfired(sprintf('tWToLong_%d', k)), lanes)) * week;
-% Unmet demand: joints asked for and not loaded yet. tYOrder moves them from
-% the connector (pDYOrder) into the yard (pYOrder), where they wait for stock.
-Y.unmet      = av_tokens(sim, {'pDYOrder', 'pYOrder'});
-Y.unmet_end  = ntokens('pDYOrder') + ntokens('pYOrder');
+% Unmet demand: joints asked for and not loaded yet. tYOrder/tYOrderCoop move
+% them from the connector (pDYOrder) into a yard (pYOrder, pCOrder), where they
+% wait for stock and a forklift.
+Y.unmet      = av_tokens(sim, {'pDYOrder', 'pYOrder', 'pCOrder'});
+Y.unmet_end  = ntokens('pDYOrder') + ntokens('pYOrder') + ntokens('pCOrder');
 Y.shipped    = timesfired('tDShip') * week;
 
 % Days in the yard, per hall joint that came onto the floor: from its
@@ -63,19 +77,23 @@ Y.yard_days_p90 = quantile_(d, 0.9);
 Y.yard_days_max = quantile_(d, 1);
 Y.minutes       = minutes;                        % run time
 
-% Every hour: hall joints in the yard, joints on the floor, between the
-% yard and the floor (on the way, on the wash rack, washed and waiting for
-% room), unmet demand and stock.
+% Every hour: hall joints at Main and at Coop, joints on the floor, between
+% the yard and the floor (on the way, on the wash rack, washed and waiting
+% for room), unmet demand, stock at both yards, and joints at the gate.
 R.hour = (0:60:P.days*1440)' / 60;
 X = hourly(sim, R.hour*60, {'pYLong', 'pYShort', 'pISpace', 'pYW', 'pWRack', 'pWDone', 'pWI', ...
-                            'pDYOrder', 'pYOrder', 'pYReady'});
+                            'pDYOrder', 'pYOrder', 'pCOrder', 'pYReady', 'pCReady', 'pCHall', ...
+                            'pAYLong', 'pAYShort', 'pAYBypass', 'pAYCHall', 'pAYCBypass'});
 R.yard_long  = X(:, 1);
 R.yard_short = X(:, 2);
 R.floor      = P.hall_space - X(:, 3);
 R.to_wash    = X(:, 4) + X(:, 5) + X(:, 6);
 R.washed     = X(:, 7);
-R.unmet      = X(:, 8) + X(:, 9);
-R.stock      = X(:, 10);
+R.unmet      = X(:, 8) + X(:, 9) + X(:, 10);
+R.stock      = X(:, 11);
+R.stock_coop = X(:, 12);
+R.coop_hall  = X(:, 13);
+R.gate       = sum(X(:, 14:18), 2);
 
 % Every joint leaving the hall: when (minutes) and how (1 ok, 2 machining,
 % 3 hardbanding, 4 scrap).

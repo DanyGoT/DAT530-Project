@@ -26,7 +26,10 @@ switch t
         fire = 1;
     case 'tWMobilize'
         fire = (ntokens('pWRack') >= P.wash_start || last_ones(P)) && fits(P, P.mobilize + P.wash(1));
-        if fire && not(ismember('Wash', P.auto)), fire = requestAR(P.wash_crew, 1); end
+        if fire && not(ismember('Wash', P.auto))
+            w = hall_workers(P.wash_crew);
+            fire = not(isempty(w)) && requestAR(w, 1);
+        end
     case 'tWDemobilize'
         fire = ntokens('pWRack') == 0 || not(fits(P, max(P.wash)));
     case 'tWToLong'

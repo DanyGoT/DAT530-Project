@@ -73,7 +73,9 @@
 % %%%%%%%   Main simulation file
 %
 % Six Petri modules (modules/), joined by connectors (imc/) that hold the
-% places between them; tokens cross only through port transitions.
+% places between them; tokens cross only through port transitions. The Yard
+% module holds both yards (Main and Coop), their forklifts and the lorries
+% between them.
 % Token = one joint (pipe). In the yard a joint's kind is the place it is in.
 % In the wash and the hall it carries colours: 'long'/'short', what inspection
 % will find ('ok', 'mach', 'hb' or 'scrap'), its order, and 'scrapped' once
@@ -111,8 +113,16 @@ switches = sum(cellfun(@(k) timesfired(sprintf('tWToShort_%d', k)) + timesfired(
                        num2cell(1:P.wash_lanes)));
 disp(['Wash mobilized ', int2str(timesfired('tWMobilize')), ' times, ', int2str(switches), ...
       ' long/short changeovers (hall data: ~5 a week)']);
-prnschedule(Sim_Results);                                    % who worked how much
+W = yard_work(P);
+work = weekdays * diff(P.shift);                             % shift minutes per forklift
+jobs = cellfun(@timesfired, W.name);
+disp(['Yard: ', int2str(timesfired('tYFromCoopLong') + timesfired('tYFromCoopShort')), ...
+      ' hall joints fetched from Coop, ', int2str(timesfired('tYForkToCoop')), ' forklift trips to Coop, ', ...
+      'forklifts in use ', int2str(round(100*sum(jobs .* W.minutes)/(P.forklifts*work))), '% of the shift, ', ...
+      num2str(sum(jobs .* W.minutes .* (1 + P.lorry_helpers*W.lorry))/60, 3), ' person-hours of yard work']);
+prnschedule(Sim_Results);                                    % who worked how much (L1T: L1 with a forklift certificate)
 plotp(Sim_Results, {'pYLong', 'pYShort', 'pWRack', 'pWI'});  % queue in front of the hall
 plotp(Sim_Results, {'pISpace'});                             % free room on the hall floor
-plotp(Sim_Results, {'pYReady', 'pDYOrder'});                 % stock and unmet demand
+plotp(Sim_Results, {'pYReady', 'pCReady', 'pDYOrder'});      % stock at both yards and unmet demand
+plotp(Sim_Results, {'pCHall', 'pAYLong', 'pAYCHall'});       % hall joints at Coop, and receipts at the gates
 plotp(Sim_Results, {'pDShipped', 'pRMach', 'pRHb', 'pYScrap'});  % where joints went

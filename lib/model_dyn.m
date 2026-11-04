@@ -5,14 +5,19 @@ function dyn = model_dyn(P, pns)
 
 global global_info
 
-long = strcmp({global_info.backlog.len}, 'long');
+b = global_info.backlog;                % the queue at the start, at Main or Coop
+long = strcmp({b.len}, 'long');
+coop = [b.coop];
+stock_coop = round(P.stock * P.coop_ready);
 m0 = {'pAClock',1, 'pDClock',1, ...
-      'pYReady',P.stock, 'pYLong',sum(long), 'pYShort',sum(not(long)), ...
+      'pYReady',P.stock - stock_coop, 'pCReady',stock_coop, 'pYFork',P.forklifts, ...
+      'pYLong',sum(long & not(coop)), 'pYShort',sum(not(long) & not(coop)), 'pCHall',sum(coop), ...
       'pYRoom',P.hall_buffer, 'pWOff',1, ...
       'pISpace',P.hall_space, 'pIStart',numel(global_info.floor), ...
       'pRMach',size(global_info.workshop{1}, 1), 'pRHb',size(global_info.workshop{2}, 1)};
-ft = {'tALong',P.unload, 'tAShort',P.unload, 'tABypass',P.unload, ...
-      'tWMobilize',P.mobilize, 'tWDemobilize',P.demobilize};
+W = yard_work(P);                       % forklift work, minutes per joint
+yard = reshape([W.name; num2cell(W.minutes)], 1, []);
+ft = [yard, {'tWMobilize',P.mobilize, 'tWDemobilize',P.demobilize}];
 for k = 1:P.wash_lanes                  % lanes start set up for long,
     n = @(name) sprintf('%s_%d', name, k); % the short lane (P.short_lane) for short
     if P.short_lane && k == P.wash_lanes
@@ -32,7 +37,14 @@ end
 dyn.m0 = only(m0, {pns.global_places.name});
 dyn.ft = [only(ft, {pns.global_transitions.name}), ...
           {'allothers', global_info.DELTA_TIME}];   % ports, hand-offs and skips: one step
-dyn.re = {'L0',P.crew(1),inf, 'L1',P.crew(2),inf, 'L2',P.crew(3),inf, 'L3',P.crew(4),inf};
+% The pool: per level, the workers without a forklift certificate ('L1') and
+% with one ('L1T').
+assert(all(P.certified <= P.crew), 'P.certified: more certificates than people');
+dyn.re = {};
+for L = 0:3
+    dyn.re = [dyn.re, {sprintf('L%d', L), P.crew(L+1) - P.certified(L+1), inf, ...
+                       sprintf('L%dT', L), P.certified(L+1), inf}];
+end
 
 
 function pairs = only(pairs, names)

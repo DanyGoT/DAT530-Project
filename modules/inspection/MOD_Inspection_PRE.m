@@ -46,7 +46,8 @@ end
 if s.auto
     fire = id > 0;                             % a machine
 else
-    fire = id > 0 && requestAR(pool(s), 1);    % ask for the worker last
+    w = hall_workers(pool(s));                 % ask for the worker last
+    fire = id > 0 && not(isempty(w)) && requestAR(w, 1);
 end
 if not(fire), return, end
 if s.finds && has_color(c, 'scrap') && not(has_color(c, 'scrapped')) && rand < 1/s.finds_left

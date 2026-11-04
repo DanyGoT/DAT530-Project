@@ -26,7 +26,7 @@ assert(ntokens('pWOff') == 1 && timesfired('tWMobilize') == timesfired('tWDemobi
 assert(timesfired('tWMobilize') > 0, 'the unit was never mobilized');
 
 [~, RU] = prnschedule(Sim_Results);
-manned = sum(RU(:, 2));            % only the wash uses workers here
+manned = sum(RU(:, 2));            % the wash, and the yard's forklift work
 assert(manned >= timesfired('tWMobilize')*(P.mobilize + P.demobilize), 'nobody manned the wash');
 disp(['test_wash: ok (', int2str(P.hall_buffer), ' washed, mobilized ', int2str(timesfired('tWMobilize')), ...
       ' times, manned ', num2str(manned/60, 2), ' h)']);

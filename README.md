@@ -124,9 +124,9 @@ A connector's places are named by the two modules' letters: `pAYLong`
   at the wash, or washed and waiting for room.
 - **The hall** is an open floor joints roll through in order, with room for
   `P.hall_space` joints. The 25 tasks of the 2021 report are grouped by level
-  into 9 steps (`P.steps`). Task times are the report's times x `P.pace`,
-  calibrated to the data's ~800 inspected a week with this crew (~2.9 joints
-  per man-hour; the company's KPI says ~3.3). Whoever in the
+  into 5 steps (`P.steps`): Clean (L0), Inspect (L1), Check (L2), UT (L3),
+  Finish (L0). Task times are the report's times x `P.pace`, calibrated
+  before the yards were added (~800 inspected a week by 7 people). Whoever in the
   crew is free and has the level does the next step on a joint; each step has
   one transition per qualified person, so several joints can be at the same
   step at once.

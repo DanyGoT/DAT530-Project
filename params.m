@@ -73,21 +73,20 @@ P.certified = [3 1 0 0];          % of those, how many hold a forklift certifica
 % joints per man-hour, wash included; the company's KPI of ~3.3 would need
 % fewer people for the same output.
 P.pace = 0.62;                    % task time = 2021 time x pace
-% Steps: the 25 tasks of the 2021 report (Appendix A), grouped by level in
-% roughly hall order, so each step needs the level its tasks need (a higher
-% level can do lower work). Per-order setup and UT/EMI calibration are left
-% out: tools stay out between orders.
+% Steps: the 25 tasks of the 2021 report (Appendix A), grouped by level into
+% 5 steps in hall order, so each step needs the level its tasks need (a higher
+% level can do lower work). L0 work comes before and after the inspection, so
+% it stays two steps. Per-order setup and UT/EMI calibration are left out:
+% tools stay out between orders. (Before simplifying: 9 steps, tag
+% pre-simplify; the minutes per level are the same.)
 %  name       s/joint  level  finds scrap  skipped if scrap    tasks
 P.steps = {
-  'Gauge',    140.5,   1,     true,        false   % 1-3      OD gauge, UT wall, coating
-  'Clean',    185,     0,     false,       true    % 4,5,8    clean and blow dry connections, grind tong marks
-  'NDT',      362.5,   1,     true,        true    % 6-7      MPI fluorescent, heat check
-  'Threads',  84,      2,     true,        false   % 10       thread visual
-  'Measure',  211.5,   1,     true,        false   % 9,11-13  RFID tags, measurements, length, HB check
+  'Clean',    185,     0,     false,       false   % 4,5,8    clean and blow dry connections, grind tong marks
+  'Inspect',  870,     1,     true,        false   % 1-3,6-7,9,11-13,19,22  gauge, UT wall, coating, MPI,
+                                                   %   heat check, RFID, measurements, laser marking, restamp
+  'Check',    151,     2,     true,        false   % 10,14,23 thread visual, report, report check
   'UT',       96.2,    3,     true,        true    % 25       UT/EMI scan
   'Finish',   198,     0,     false,       false   % 15-18,20,21 field repair, paint, dope, cap
-  'Mark',     155.5,   1,     false,       true    % 19,22    laser marking, restamp
-  'Report',   67,      2,     false,       false   % 14,23    report, report check
 };
 P.auto = {};                      % scenario: steps a machine does with no one at it, by
                                   % name ('Clean', 'UT', ...), and 'Wash' for the wash

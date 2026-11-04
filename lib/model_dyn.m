@@ -27,6 +27,10 @@ for s = global_info.S
     end
 end
 
+% GPenSIM ends a firing at the first time step at or after its end, so times
+% between steps would all be rounded up; round them to the nearest step.
+D = global_info.DELTA_TIME;
+ft(2:2:end) = num2cell(max(D, round([ft{2:2:end}] / D) * D));
 dyn.m0 = only(m0, {pns.global_places.name});
 dyn.ft = [only(ft, {pns.global_transitions.name}), ...
           {'allothers', global_info.DELTA_TIME}];   % ports, hand-offs and skips: one step

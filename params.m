@@ -4,6 +4,9 @@ function P = params()
 
 P.seed = 1;                       % same seed, same run
 P.days = 7;                       % simulated days
+P.delta = 0.5;                    % GPenSIM's time step (DELTA_TIME), minutes. Firing times are
+                                  % rounded to it (model_dyn); hand-offs take one step. 0.5 runs
+                                  % twice as fast as 0.25 and inspects 1.5-5% less (2026-11-04)
 P.shift = [7 15]*60;              % yard and halls work Mon-Fri 07-15
 P.open = [7 15]*60;               % lorries arrive and tickets come in Mon-Fri 07-15;
                                   % stays put when the shift changes (overtime)

@@ -141,6 +141,11 @@ A connector's places are named by the two modules' letters: `pAYLong`
   yet.
 - Yard and halls work Mon-Fri 07-15; arrivals, tickets and workshops don't stop.
 - Runs are repeatable: `P.seed` fixes the random numbers.
+- **Time step.** GPenSIM steps a fixed clock, `P.delta` = 0.5 min, and ends a
+  firing at the first step at or after its end; firing times are rounded to
+  the nearest step (`model_dyn`) so they aren't all rounded up. Hand-offs
+  between modules take one step. `P.delta = 0.25` runs half as fast and
+  inspects 1.5-5% more.
 
 ## Running
 

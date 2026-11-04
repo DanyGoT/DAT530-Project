@@ -16,23 +16,26 @@ function [fire, transition] = COMMON_PRE(transition)
 % A port that takes a coloured joint picks it and gives its output exactly the
 % joint's colours (override), so a space or credit token taken in the same
 % firing never mixes its colours in.
+% A hall's ports go by their name in hall 1 (t); h is the hall (hall_of).
 
 global global_info
 fire = 1;
-t = transition.name;
+[h, t] = hall_of(transition.name);
 
 switch t
-    case {'tYLong', 'tYShort'}      % the yard's next hall joint gets its colours
-        j = global_info.hall(global_info.next_hall);
+    case {'tYLong', 'tYShort'}      % hall h's next joint from the yard gets its colours
+        i = next_joint(h);
+        if i == 0, return, end      % none: MOD_Yard_PRE says no
+        j = global_info.hall(i);
         transition.new_color = {j.len, j.find, sprintf('order%d', j.order)};
         transition.override = 1;
 
     case 'tWIn'                     % the next joint from the yard
-        [fire, transition] = first(transition, 'pYW');
+        [fire, transition] = first(transition, hall_name('pYW', h));
     case 'tWOut'                    % the next washed joint
-        [fire, transition] = first(transition, 'pWDone');
+        [fire, transition] = first(transition, hall_name('pWDone', h));
     case 'tIIn'
-        [fire, transition] = first(transition, 'pWI');
+        [fire, transition] = first(transition, hall_name('pWI', h));
     case 'tIInRepair'
         [fire, transition] = first(transition, 'pRI');
     case {'tIRoom', 'tYRoom'}       % a credit carries no colours
@@ -41,15 +44,15 @@ switch t
 
     % Leaving the hall, by what inspection found.
     case 'tIOk'                     % keeps its order: the yard stores it by order
-        [id, c] = find_token('pIDone', @(tok) has_color(tok.color, 'ok'));
+        [id, c] = find_token(hall_name('pIDone', h), @(tok) has_color(tok.color, 'ok'));
         [fire, transition] = pick(transition, id, c(strncmp(c, 'order', 5)));
     case 'tIScrap'
-        [id, ~] = find_token('pIDone', @(tok) has_color(tok.color, 'scrapped'));
+        [id, ~] = find_token(hall_name('pIDone', h), @(tok) has_color(tok.color, 'scrapped'));
         [fire, transition] = pick(transition, id, {});
     case 'tIMach'
-        [fire, transition] = to_repair(transition, 'mach');
+        [fire, transition] = to_repair(transition, 'mach', h);
     case 'tIHb'
-        [fire, transition] = to_repair(transition, 'hb');
+        [fire, transition] = to_repair(transition, 'hb', h);
 
     case 'tRInMach'                 % colourless at the workshops
         [id, ~] = find_token('pIRMach', @(tok) true);
@@ -76,9 +79,9 @@ function [fire, transition] = first(transition, place)
 [fire, transition] = pick(transition, id, c);
 
 
-function [fire, transition] = to_repair(transition, color)
+function [fire, transition] = to_repair(transition, color, h)
 % A joint for the workshop keeps only its order: the repair time is per order.
-[id, c] = find_token('pIDone', @(tok) has_color(tok.color, color));
+[id, c] = find_token(hall_name('pIDone', h), @(tok) has_color(tok.color, color));
 fire = id > 0;
 if not(fire), return, end
 [~, transition] = pick(transition, id, {sprintf('order%d', order_of(c))});

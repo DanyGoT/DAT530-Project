@@ -98,8 +98,8 @@ A connector's places are named by the two modules' letters: `pAYLong`
   without a certificate first. (No GPenSIM priorities: setting any makes GPenSIM try every
   transition in a fixed order, and the hall's dispatch would change.)
   - Hall bundles at Coop are fetched to Main by lorry when they are within
-    `P.fetch_ahead` joints of the front of the hall queue; the hall waits if
-    one isn't there in time.
+    `P.fetch_ahead` joints (per hall) of the front of the hall queue; the
+    hall waits if one isn't there in time.
   - Ok joints for Coop go from the hall straight onto a lorry, not into a
     rack at Main first.
   - A joint asked for comes from Coop with Coop's share of the stock.
@@ -139,6 +139,17 @@ A connector's places are named by the two modules' letters: `pAYLong`
   `global_info.workshop` keeps when each is done. Routing the round trip
   through the yard (waiting for transport out, received back) is not modelled
   yet.
+- **A second hall** (`P.halls = 2`, made up for expansion experiments) stands
+  at Main: the same hall with its own wash, floor and credits, starting
+  empty. Both share the crew, the yard queue and the forklifts. Each hall
+  takes whole orders: once it has all of its order out of the yard, it takes
+  the next order no hall has, and if both are free, the one with the most
+  room (free floor and credits) gets it (`lib/next_joint.m`). Joints back
+  from repair go to whichever hall has room first. Hall 2's places and
+  transitions are hall 1's with `H2_` after the first letter (`pH2_ISpace`,
+  `tH2_Wash_1`; `hall_name`, `hall_of`); `inspection2_pdf` and `wash2_pdf`
+  build them, and both halls run the same hooks. With `P.halls = 1` the net
+  and the results are exactly the model without it.
 - Yard and halls work Mon-Fri 07-15; arrivals, tickets and workshops don't stop.
 - Runs are repeatable: `P.seed` fixes the random numbers.
 - **Time step.** GPenSIM steps a fixed clock, `P.delta` = 0.5 min, and ends a
@@ -151,7 +162,7 @@ A connector's places are named by the two modules' letters: `pAYLong`
 
 ```matlab
 project_pn                      % one week; prints a summary, worker use and plots
-test_yard; test_wash; test_repair; test_hall; test_model
+test_yard; test_wash; test_repair; test_hall; test_model; test_halls
 analysis_pn                     % invariants and crew bound, in seconds
 ```
 

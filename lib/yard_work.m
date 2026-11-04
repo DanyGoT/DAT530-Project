@@ -26,6 +26,10 @@ rows = {'tYInLong',         u,            true    % unload a receipt at Main
         'tYShipCoop',       us + l,       true
         'tYForkToCoop',     P.fork_drive, false   % drive a forklift over
         'tYForkToMain',     P.fork_drive, false};
+feed = rows(ismember(rows(:, 1), {'tYLong', 'tYShort'}), :);
+for h = 2:P.halls                       % the other halls' feeds
+    rows = [rows; hall_name(feed(:, 1), h)', feed(:, 2:3)];
+end
 W.name    = rows(:, 1)';
 W.minutes = [rows{:, 2}];
 W.lorry   = [rows{:, 3}];

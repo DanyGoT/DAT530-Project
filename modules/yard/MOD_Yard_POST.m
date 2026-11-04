@@ -1,17 +1,22 @@
 function [] = MOD_Yard_POST(transition)
 % Hand back the workers, and keep the yards' books: which hall joints are at
-% Coop, on a lorry or at Main, and what is on the lorries. On to the next
-% hall joint.
+% Coop, on a lorry or at Main, and what is on the lorries. A joint sent to a
+% hall is off the list; next_hall is the first one still in the yard.
 global global_info
-t = transition.name;
+[h, t] = hall_of(transition.name);
 if not(ismember(t, {'tYRoom', 'tYOrder', 'tYOrderCoop'}))
     release();
 end
 switch t
     case {'tYLong', 'tYShort'}
-        j = global_info.hall(global_info.next_hall);     % for days in the yard
-        global_info.yard_out(end+1, :) = [current_time(), j.t, j.order];
-        global_info.next_hall = global_info.next_hall + 1;
+        i = next_joint(h);
+        j = global_info.hall(i);                          % for days in the yard
+        global_info.yard_out(end+1, :) = [current_time(), j.t, j.order, h];
+        global_info.sent(i) = true;
+        n = numel(global_info.hall);
+        while global_info.next_hall <= n && global_info.sent(global_info.next_hall)
+            global_info.next_hall = global_info.next_hall + 1;
+        end
     case 'tYInCHall'                        % unloaded at Coop
         id = global_info.coop_ids(global_info.coop_next);
         global_info.cstate(id) = 1;

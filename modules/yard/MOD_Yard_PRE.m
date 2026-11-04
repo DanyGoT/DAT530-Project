@@ -1,7 +1,9 @@
 function [fire, transition] = MOD_Yard_PRE(transition)
 % The yard works during the shift. Hall joints leave for the wash in the
 % order of global_info.hall, so the joints of an order stay together; a joint
-% unloaded at Coop must have been fetched to Main first. Every move of a joint
+% unloaded at Coop must have been fetched to Main first. With two halls, each
+% takes whole orders (next_joint) through its own feeds (t is the name in
+% hall 1, h the hall). Every move of a joint
 % is forklift work: the arcs take a forklift at that yard, and here a
 % certified worker drives it, with P.lorry_helpers more people when a lorry
 % is loaded or unloaded. Conditions are checked first, workers asked for last.
@@ -16,11 +18,11 @@ transition.new_color = {};
 transition.override = 1;
 fire = in_shift(P);
 if not(fire), return, end
-t = transition.name;
+[h, t] = hall_of(transition.name);
 
 switch t
-    case {'tYLong', 'tYShort'}                  % the next hall joint, if it is at Main
-        fire = next_hall_is(lower(t(3:end)));
+    case {'tYLong', 'tYShort'}                  % hall h's next joint, if it is at Main
+        fire = next_hall_is(lower(t(3:end)), h);
     case {'tYFromCoopLong', 'tYFromCoopShort'}  % the lorry from Coop is here
         q = global_info.lorry;
         fire = not(isempty(q)) && q(1, 2) + P.lorry_drive <= current_time() ...
@@ -49,6 +51,9 @@ end
 if fire
     fire = workers(t, P);
 end
+if fire && ismember(t, {'tYLong', 'tYShort'})   % its order is hall h's from now on
+    global_info.order_hall(global_info.hall_orders(next_joint(h))) = h;
+end
 
 
 function ok = workers(t, P)
@@ -69,18 +74,23 @@ end
 
 
 function yes = main_urgent()
-% At Main, the wash waits for its next joint (it is there and there is a
+% At Main, a wash waits for its next joint (it is there and there is a
 % credit): feeding it goes before unloading and storing. Other forklift jobs
 % (shipping, unloading) take turns.
-yes = ntokens('pYRoom') > 0 && (next_hall_is('long') || next_hall_is('short'));
+global global_info
+yes = false;
+for h = 1:global_info.P.halls
+    yes = yes || (ntokens(hall_name('pYRoom', h)) > 0 ...
+                  && (next_hall_is('long', h) || next_hall_is('short', h)));
+end
 
 
-function yes = next_hall_is(len)
-% The next hall joint has this length and is at Main: arrived there, or
+function yes = next_hall_is(len, h)
+% Hall h's next joint has this length and is at Main: arrived there, or
 % fetched from Coop.
 global global_info
-i = global_info.next_hall;
-yes = i <= numel(global_info.hall);
+i = next_joint(h);
+yes = i > 0;
 if not(yes), return, end
 j = global_info.hall(i);
 here = (j.coop && global_info.cstate(j.id) == 3) || (not(j.coop) && j.t <= current_time());
@@ -88,13 +98,15 @@ yes = here && strcmp(j.len, len);
 
 
 function k = fetchable()
-% Places in the hall list of the Coop bundles at Coop that are within
-% P.fetch_ahead joints of the front; the first is fetched next.
+% Places in the hall list of the Coop bundles at Coop that are among the
+% first P.fetch_ahead joints still in the yard, per hall (so a big order for
+% one hall doesn't keep the other's waiting at Coop); the first is fetched next.
 global global_info
+P = global_info.P;
 i = global_info.next_hall;
-h = global_info.hall(i:min(end, i + global_info.P.fetch_ahead - 1));
-ids = [h.id];
-k = i - 1 + find([h.coop] & global_info.cstate(ids) == 1);
+k = i - 1 + find(not(global_info.sent(i:end)), P.halls * P.fetch_ahead);
+h = global_info.hall(k);
+k = k([h.coop] & global_info.cstate([h.id]) == 1);
 
 
 function n = coop_work()

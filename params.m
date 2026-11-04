@@ -63,6 +63,12 @@ P.hall_space = 70;                % joints on the hall floor at once (company, 2
 P.hall_buffer = 20;               % joints out of the yard and not yet on the floor:
                                   % at the wash or washed, waiting for room (gut)
 P.floor_start = 15;               % joints on the floor at the start: never empty, usually not full
+P.halls = 1;                      % 2: a second hall at Main (made up, for expansion), the same
+                                  % as the first: its own wash (P.wash_lanes), floor
+                                  % (P.hall_space) and credits (P.hall_buffer), starting empty.
+                                  % Both share the crew, the yard and its forklifts. Each takes
+                                  % whole orders; the next order goes to the one with the most
+                                  % room (next_joint)
 P.crew = [5 5 1 1];               % people per level L0-L3, one pool for hall, wash and yard
                                   % (4-7 seen at work in the hall, others elsewhere; the hall
                                   % work is ~26% L0, 58% L1, 16% L2/L3). 12 people: the 7 the

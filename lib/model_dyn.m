@@ -12,18 +12,20 @@ stock_coop = round(P.stock * P.coop_ready);
 m0 = {'pAClock',1, 'pDClock',1, ...
       'pYReady',P.stock - stock_coop, 'pCReady',stock_coop, 'pYFork',P.forklifts, ...
       'pYLong',sum(long & not(coop)), 'pYShort',sum(not(long) & not(coop)), 'pCHall',sum(coop), ...
-      'pYRoom',P.hall_buffer, ...
-      'pISpace',P.hall_space, 'pIStart',numel(global_info.floor), ...
+      'pIStart',numel(global_info.floor), ...         % only hall 1 starts with joints on its floor
       'pRMach',size(global_info.workshop{1}, 1), 'pRHb',size(global_info.workshop{2}, 1)};
 W = yard_work(P);                       % forklift work, minutes per joint
 yard = reshape([W.name; num2cell(W.minutes)], 1, []);
 ft = yard;
-for k = 1:P.wash_lanes
-    ft = [ft, {sprintf('tWash_%d', k), P.wash_min}];
-end
-for s = global_info.S
-    for t = s.ts
-        ft = [ft, {t{1}, s.ft}];
+for h = 1:P.halls                       % each hall: its credits, floor, wash and steps
+    m0 = [m0, {hall_name('pYRoom', h), P.hall_buffer, hall_name('pISpace', h), P.hall_space}];
+    for k = 1:P.wash_lanes
+        ft = [ft, {hall_name(sprintf('tWash_%d', k), h), P.wash_min}];
+    end
+    for s = global_info.S
+        for t = hall_name(s.ts, h)
+            ft = [ft, {t{1}, s.ft}];
+        end
     end
 end
 

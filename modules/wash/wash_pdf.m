@@ -10,10 +10,12 @@
 % Input port:  tWIn  - takes the next joint from the yard (pYW) onto the rack
 % Output port: tWOut - hands the next washed joint to the hall (pWI)
 % Both keep the joint's colours.
+% wash_pdf(h) is hall h's wash (P.halls; for_hall).
 
-function [png] = wash_pdf()
+function [png] = wash_pdf(h)
 
 global global_info
+if nargin < 1, h = 1; end
 
 lanes = arrayfun(@(k) sprintf('tWash_%d', k), 1:global_info.P.wash_lanes, 'UniformOutput', false);
 png.PN_name = 'Washing';
@@ -25,3 +27,4 @@ for t = lanes
 end
 png.set_of_As = As;
 png.set_of_Ports = {'tWIn', 'tWOut'};
+png = for_hall(png, h);

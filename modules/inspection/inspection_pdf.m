@@ -14,10 +14,13 @@
 % Output ports: tIOk, tIScrap (to the yard), tIMach, tIHb (to Repair),
 %               sorted from pIDone by what inspection found
 %               tIRoom     (hands the credit back to the yard)
+% inspection_pdf(h) is hall h's (P.halls; for_hall): the same net with its
+% own names. Only hall 1 has joints on its floor at t = 0.
 
-function [png] = inspection_pdf()
+function [png] = inspection_pdf(h)
 
 global global_info
+if nargin < 1, h = 1; end
 S = global_info.S;
 first = S(1).place;
 
@@ -46,3 +49,4 @@ png.set_of_Ps = Ps;
 png.set_of_Ts = Ts;
 png.set_of_As = As;
 png.set_of_Ports = [ins, exits, {'tIRoom'}];
+png = for_hall(png, h);

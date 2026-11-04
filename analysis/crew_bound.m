@@ -36,12 +36,12 @@ for k = 1:size(P.steps, 1)
     m = sec * P.pace / 60;
     if skip, m = m * (1 - scrap * before(k)); end
     if ismember(name, P.auto)
-        B.machine = min(B.machine, week / m);
+        B.machine = min(B.machine, P.halls * week / m);   % one per hall
     else
         work(level+1) = work(level+1) + m;
     end
 end
-B.wash_cap = week * P.wash_lanes / P.wash_min;
+B.wash_cap = P.halls * week * P.wash_lanes / P.wash_min;
 B.wash = P.wash_min * not(ismember('Wash', P.auto));
 work(1) = work(1) + B.wash;
 

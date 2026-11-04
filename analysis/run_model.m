@@ -11,11 +11,7 @@ function [Y, R] = run_model(P)
 global global_info
 
 model_init(P);
-pns = pnstruct({'arrival_pdf', 'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
-                'repair_pdf', 'departure_pdf', ...
-                'imc_arrival_yard', 'imc_yard_wash', 'imc_wash_inspection', ...
-                'imc_inspection_yard', 'imc_inspection_repair', 'imc_repair_yard', ...
-                'imc_yard_departure'});
+pns = pnstruct(model_pdfs(P));
 pni = initialdynamics(pns, model_dyn(P, pns));
 tic;
 sim = gpensim(pni);
@@ -24,12 +20,14 @@ minutes = toc / 60;
 weekdays = sum(mod(0:P.days-1, 7) < 5);
 week = 5 / weekdays;
 work = weekdays * diff(P.shift);                 % shift minutes per person
-exits = {'tIOk', 'tIMach', 'tIHb', 'tIScrap'};
+H = 1:P.halls;
+exits = hall_name({'tIOk', 'tIMach', 'tIHb', 'tIScrap'}, H);   % hall by hall
 n = cellfun(@timesfired, exits);
 [~, ~, RU] = evalc('prnschedule(sim)');          % text, LE, RES_USAGE
 levels = {sim.system_resources.name};
 
 Y.inspected  = sum(n) * week;
+Y.hall2      = sum(n(5:end)) * week;              % of them in the second hall
 Y.per_hour   = sum(n) / (sum(P.crew) * work/60); % joints per man-hour, whole crew
 Y.busy       = sum(RU(:, 2)) / (sum(P.crew) * work);
 for L = 0:3                                      % busy share per level, with or without certificate
@@ -53,8 +51,8 @@ Y.gate       = av_tokens(sim, {'pAYLong', 'pAYShort', 'pAYBypass', 'pAYCHall', '
 % Hall joints not yet sent to the wash at the end: at the gate, at either
 % yard, or on a lorry from Coop.
 Y.yard_queue = sum(cellfun(@ntokens, {'pAYLong', 'pAYShort', 'pAYCHall', 'pYLong', 'pYShort', 'pCHall', 'pYToMain'}));
-Y.waiting    = av_tokens(sim, {'pWI'});          % washed, waiting for room on the floor
-Y.free_floor = av_tokens(sim, {'pISpace'});
+Y.waiting    = av_tokens(sim, hall_name({'pWI'}, H));      % washed, waiting for room on the floor
+Y.free_floor = av_tokens(sim, hall_name({'pISpace'}, H));  % all halls
 % Unmet demand: joints asked for and not loaded yet. tYOrder/tYOrderCoop move
 % them from the connector (pDYOrder) into a yard (pYOrder, pCOrder), where they
 % wait for stock and a forklift.
@@ -74,30 +72,30 @@ Y.yard_days_p90 = quantile_(d, 0.9);
 Y.yard_days_max = quantile_(d, 1);
 Y.minutes       = minutes;                        % run time
 
-% Every hour: hall joints at Main and at Coop, joints on the floor, between
-% the yard and the floor (on the way, on the wash rack, washed and waiting
+% Every hour: hall joints at Main and at Coop, joints on the floors, between
+% the yard and the floors (on the way, on the wash racks, washed and waiting
 % for room), unmet demand, stock at both yards, and joints at the gate.
 R.hour = (0:60:P.days*1440)' / 60;
-X = hourly(sim, R.hour*60, {'pYLong', 'pYShort', 'pISpace', 'pYW', 'pWRack', 'pWDone', 'pWI', ...
-                            'pDYOrder', 'pYOrder', 'pCOrder', 'pYReady', 'pCReady', 'pCHall', ...
-                            'pAYLong', 'pAYShort', 'pAYBypass', 'pAYCHall', 'pAYCBypass'});
+X = hourly(sim, R.hour*60, {'pYLong', 'pYShort', 'pDYOrder', 'pYOrder', 'pCOrder', 'pYReady', 'pCReady', ...
+                            'pCHall', 'pAYLong', 'pAYShort', 'pAYBypass', 'pAYCHall', 'pAYCBypass'});
+halls = @(places) sum(hourly(sim, R.hour*60, hall_name(places, H)), 2);
 R.yard_long  = X(:, 1);
 R.yard_short = X(:, 2);
-R.floor      = P.hall_space - X(:, 3);
-R.to_wash    = X(:, 4) + X(:, 5) + X(:, 6);
-R.washed     = X(:, 7);
-R.unmet      = X(:, 8) + X(:, 9) + X(:, 10);
-R.stock      = X(:, 11);
-R.stock_coop = X(:, 12);
-R.coop_hall  = X(:, 13);
-R.gate       = sum(X(:, 14:18), 2);
+R.floor      = P.halls*P.hall_space - halls({'pISpace'});
+R.to_wash    = halls({'pYW', 'pWRack', 'pWDone'});
+R.washed     = halls({'pWI'});
+R.unmet      = X(:, 3) + X(:, 4) + X(:, 5);
+R.stock      = X(:, 6);
+R.stock_coop = X(:, 7);
+R.coop_hall  = X(:, 8);
+R.gate       = sum(X(:, 9:13), 2);
 
-% Every joint leaving the hall: when (minutes) and how (1 ok, 2 machining,
+% Every joint leaving a hall: when (minutes) and how (1 ok, 2 machining,
 % 3 hardbanding, 4 scrap).
 D = extractt(sim, exits);
 if isempty(D), D = zeros(0, 3); end              % nothing left the hall (noL3: no one for UT)
 [~, how] = ismember(D(:, 1), cellfun(@(t) find(strcmp({sim.global_transitions.name}, t)), exits));
-R.out = sortrows([D(:, 3), how]);
+R.out = sortrows([D(:, 3), mod(how - 1, 4) + 1]);
 R.exits = exits;
 
 % The crew's work: one row per job [resource, transition, start, end,
@@ -143,8 +141,8 @@ end
 Yd.backlog = ismember(Yd.order, [gi.backlog.order]);
 Yd.days = (Yd.floor - Yd.received) / 1440;
 % Still in the yard at the end, not yet sent: when they were received.
-Yd.waiting_since = [gi.hall(gi.next_hall:end).t]';
-Yd.waiting_backlog = ismember([gi.hall(gi.next_hall:end).order], [gi.backlog.order])';
+Yd.waiting_since = [gi.hall(not(gi.sent)).t]';
+Yd.waiting_backlog = ismember([gi.hall(not(gi.sent)).order], [gi.backlog.order])';
 
 
 function X = hourly(sim, times, places)

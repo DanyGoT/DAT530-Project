@@ -3,6 +3,7 @@ function [] = model_init(P)
 % inspection_pdf reads the hall steps from it.
 
 global global_info
+assert(ismember(P.halls, [1 2]), 'P.halls: one or two halls');
 rng(P.seed);
 
 [pipes, repair, backlog, floor] = gen_pipes(P);
@@ -49,10 +50,13 @@ global_info.yard_helpers = -inf;            % ... or a lorry no helpers
 W = yard_work(P);
 global_info.lorry_job = containers.Map(W.name, W.lorry);   % loads or unloads a lorry
 global_info.next_pipe = 1;
-global_info.next_hall = 1;
+global_info.next_hall = 1;                  % the first hall joint still in the yard
+global_info.sent = false(1, numel(hall));   % per hall joint: sent to a hall
+global_info.hall_orders = [hall.order];     % per hall joint: its order
+global_info.order_hall = zeros(1, orders);  % per order: the hall it goes to, 0 none yet
 global_info.next_floor = 1;
 global_info.next_demand = 1;
-global_info.yard_out = zeros(0, 3);         % per hall joint the yard sends on: [time, received, order]
+global_info.yard_out = zeros(0, 4);         % per hall joint the yard sends on: [time, received, order, hall]
 global_info.floor_in = zeros(0, 2);         % per joint onto the floor from the wash: [time, order]
 global_info.hall_out = zeros(0, 3);         % per joint leaving the hall: [time, order, how 1-4]
                                             % (order 0: back from repair, its order not kept)

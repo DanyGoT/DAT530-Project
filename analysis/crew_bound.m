@@ -7,11 +7,8 @@ function B = crew_bound(P)
 %   - scrapped joints skip the steps marked skip once scrap is found. Scrap
 %     is found at each finding step with the same chance, so a skip step is
 %     skipped with the share of finding steps before it;
-%   - the wash: one person mans the unit while its lanes run, so the manned
-%     time per joint is the busiest lane's time per joint (the wash time /
-%     lanes when the lanes share the work). Only P.wash_crew may man it.
-%     Mobilizing, changeovers and walking are left out, so the real number
-%     is lower.
+%   - the wash: P.wash_min manned minutes per joint, one lane per joint. Only
+%     P.wash_crew may man it.
 %   - steps in P.auto (and the wash, if 'Wash' is in it) need no one.
 % Work at level L can be done by level L or higher. For each L, the people
 % at L or higher must do the work only they can do:
@@ -22,7 +19,7 @@ function B = crew_bound(P)
 %   B.work(L+1)  crew minutes per joint at level L (wash in L0)
 %   B.wash       manned wash minutes per joint
 %   B.level(L+1) the bound from the people at level L or higher (a week)
-%   B.wash_cap   joints a week the busiest wash lane can wash
+%   B.wash_cap   joints a week the wash lanes can wash
 %   B.machine    joints a week the slowest machine can do (inf: none)
 %   B.bound      the lowest of them all
 %   B.minutes    crew minutes per joint, all levels
@@ -44,15 +41,8 @@ for k = 1:size(P.steps, 1)
         work(level+1) = work(level+1) + m;
     end
 end
-short = (1 - P.p_long)*P.mean_joints(2) / ((1 - P.p_long)*P.mean_joints(2) + P.p_long*P.mean_joints(1));
-lane = [(1 - short)*P.wash(1), short*P.wash(2)];    % lane minutes per joint [long short]
-if P.short_lane
-    lane = max(lane(1) / (P.wash_lanes - 1), lane(2));
-else
-    lane = sum(lane) / P.wash_lanes;
-end
-B.wash_cap = week / lane;
-B.wash = lane * not(ismember('Wash', P.auto));
+B.wash_cap = week * P.wash_lanes / P.wash_min;
+B.wash = P.wash_min * not(ismember('Wash', P.auto));
 work(1) = work(1) + B.wash;
 
 B.work = work;

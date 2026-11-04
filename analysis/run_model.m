@@ -28,7 +28,6 @@ exits = {'tIOk', 'tIMach', 'tIHb', 'tIScrap'};
 n = cellfun(@timesfired, exits);
 [~, ~, RU] = evalc('prnschedule(sim)');          % text, LE, RES_USAGE
 levels = {sim.system_resources.name};
-lanes = 1:P.wash_lanes;
 
 Y.inspected  = sum(n) * week;
 Y.per_hour   = sum(n) / (sum(P.crew) * work/60); % joints per man-hour, whole crew
@@ -56,8 +55,6 @@ Y.gate       = av_tokens(sim, {'pAYLong', 'pAYShort', 'pAYBypass', 'pAYCHall', '
 Y.yard_queue = sum(cellfun(@ntokens, {'pAYLong', 'pAYShort', 'pAYCHall', 'pYLong', 'pYShort', 'pCHall', 'pYToMain'}));
 Y.waiting    = av_tokens(sim, {'pWI'});          % washed, waiting for room on the floor
 Y.free_floor = av_tokens(sim, {'pISpace'});
-Y.changes    = sum(arrayfun(@(k) timesfired(sprintf('tWToShort_%d', k)) + ...
-                             timesfired(sprintf('tWToLong_%d', k)), lanes)) * week;
 % Unmet demand: joints asked for and not loaded yet. tYOrder/tYOrderCoop move
 % them from the connector (pDYOrder) into a yard (pYOrder, pCOrder), where they
 % wait for stock and a forklift.

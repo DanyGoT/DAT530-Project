@@ -18,8 +18,6 @@ P.receipts_weekday = [21.0 21.6 20.4 17.8 16.7];   % % of receipts Mon-Fri
 P.p_long = 0.51;                  % DP, TBG, LS are long (13-14 m); HW, DC, NM short (9.5 m)
 P.mean_joints = [66 8];           % mean joints per receipt [long short]
 P.p_bypass = 0.23;                % Mobilization, RFID pairing, ...: storage only, no hall
-P.short_run = 23;                 % short joints the yard sends in one run, whole orders
-                                  % (hall data: ~1 long/short switch a day, runs of 3 orders, 23 joints)
 P.backlog = 650;                  % hall joints already queued in the yard at the start
                                   % (week study §3: 500-800; the business runs a deep queue)
 P.N_in = inf;                     % drain test: arrivals stop after this many hall joints
@@ -46,20 +44,15 @@ P.ship_ready = false;             % drain test: ship every rig-ready joint at on
 P.stop_clear = false;             % drain test: stop once every joint has arrived and the
                                   % hall, the wash and the yard's hall queue are empty
 
-% Washing (§5.3). One automated unit with two pumps (two lanes), each lane set
-% up for long or short joints. Someone from the crew mans the unit while it
-% runs: mobilizes it once enough joints wait, does the changeovers, and
-% demobilizes it when the queue is empty or the shift ends.
+% Washing (§5.3). One automated unit with two pumps (lanes); someone from the
+% crew mans it. Not a bottleneck (the company), so it is one step per lane.
+% Its time is the manned minutes per joint of the detailed wash it replaces
+% (mobilize 36.5 min, demobilize 9.8, 200/90 s per long/short joint per lane,
+% 23-min long/short changeovers; tag pre-simplify): 2.0-2.5 in 3-day runs.
 P.wash_lanes = 2;
-P.wash_start = 10;                % joints waiting before the unit is mobilized (gut)
+P.wash_min = 2.2;                 % minutes per joint, one worker
 P.wash_crew = {'L0', 'L1'};       % who may man the unit, lowest first (gut): the one L2 and
                                   % the one L3 stay in the hall for the steps only they can do
-P.mobilize   = 36.5;
-P.demobilize = 9.8;
-P.wash       = [200 90]/60;       % per joint [long short]
-P.change     = 23.1;              % switch a lane between long and short
-P.short_lane = false;             % scenario: the last lane stays set up for short joints,
-                                  % the others for long (no changeovers)
 
 % Inspection hall: an open floor that joints roll through in order. Whoever is
 % free and qualified does the next step on a joint, wherever it lies.

@@ -111,21 +111,13 @@ A connector's places are named by the two modules' letters: `pAYLong`
   - Most times are guesses (marked "gut" in `params.m`): our data has
     nothing on the yards. Repair transport (to and from the workshops) is
     only counted on the way back (`tYInRepaired`).
-- **Short runs.** The yard sends hall joints in arrival order, whole orders at
-  a time, except that short orders go in runs: when a short order is done and
-  the run is under `P.short_run` joints (23), the next short order already in
-  the yard goes next. The hall data shows ~1 long/short switch a day and short
-  runs of ~3 orders, ~23 joints; strict arrival order switches several times
-  as often, and each switch costs the wash a 23-min changeover.
 - **Washing** is one unit with two lanes (two pumps). It takes joints from the
-  yard onto its rack (`pWRack`) and washes them in the order they came. A free
-  L0 or L1 worker (`P.wash_crew`, lowest first) mobilizes it once
-  `P.wash_start` joints wait and stays with it until it is demobilized: when
-  the queue is empty, or when nothing more fits before the shift ends. L2 and
-  L3 never man it: otherwise the one L3 can stand at the wash for hours while
-  joints pile up at UT. Each lane
-  is set up for long or short joints; changing over takes 23 min. Lanes stay
-  set up for long joints (nine in ten), and one at a time goes over to short.
+  yard onto its rack (`pWRack`) and washes them in the order they came, one
+  per lane at a time, each with a free L0 or L1 worker (`P.wash_crew`)
+  for `P.wash_min` = 2.2 min. That is the manned time per joint of the
+  detailed wash it replaced (mobilizing, long/short changeovers, waiting;
+  tag `pre-simplify`). The wash is not a bottleneck, so its details are left
+  out; the yard sends hall joints in plain list order.
 - **The hall buffer.** The yard sends a joint to the wash only with a credit
   (`pYRoom`), and the hall hands the credit back (`pIRoom` → `pIYRoom` →
   `pYRoom`) when the joint comes onto the floor. So at most `P.hall_buffer` joints are between the yard and the floor:

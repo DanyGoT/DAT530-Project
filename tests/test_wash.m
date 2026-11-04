@@ -1,6 +1,5 @@
 % Yard and Washing, Monday only, with credits for 60 joints. The wash washes
-% them in arrival order, someone from the crew mans it from mobilize to
-% demobilize, and it is demobilized again by midnight.
+% them in arrival order, each with a worker from P.wash_crew.
 
 clear all; clc;
 global global_info
@@ -21,12 +20,10 @@ orders = arrayfun(@(tok) order_of(tok.color), bank);
 lens = arrayfun(@(tok) find(ismember({'long', 'short'}, tok.color)), bank);
 assert(isequal(orders, [global_info.hall(1:P.hall_buffer).order]), 'joints washed out of order');
 assert(isequal(lens, 1 + strcmp({global_info.hall(1:P.hall_buffer).len}, 'short')), 'joints lost their length');
-assert(ntokens('pWOff') == 1 && timesfired('tWMobilize') == timesfired('tWDemobilize'), ...
-       'the unit is still mobilized at midnight');
-assert(timesfired('tWMobilize') > 0, 'the unit was never mobilized');
+washed = sum(cellfun(@timesfired, arrayfun(@(k) sprintf('tWash_%d', k), 1:P.wash_lanes, 'UniformOutput', false)));
+assert(washed == P.hall_buffer, 'washed joints do not add up');
 
 [~, RU] = prnschedule(Sim_Results);
 manned = sum(RU(:, 2));            % the wash, and the yard's forklift work
-assert(manned >= timesfired('tWMobilize')*(P.mobilize + P.demobilize), 'nobody manned the wash');
-disp(['test_wash: ok (', int2str(P.hall_buffer), ' washed, mobilized ', int2str(timesfired('tWMobilize')), ...
-      ' times, manned ', num2str(manned/60, 2), ' h)']);
+assert(manned >= washed * P.wash_min, 'nobody manned the wash');
+disp(['test_wash: ok (', int2str(washed), ' washed, manned ', num2str(washed * P.wash_min / 60, 2), ' h)']);

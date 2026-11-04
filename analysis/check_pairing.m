@@ -15,7 +15,6 @@ changes = {
   'crew [2 3 1 0]',  'crew',             [2 3 1 0]
   'shift 07-17',     'shift',            [7 17]*60
   'wash_lanes 3',    'wash_lanes',       3
-  'short_run 0',     'short_run',        0
   'pace x1.1',       'pace',             0.62*1.1
   'receipts x1.2',   'receipts_per_day', 6.7*1.2
   'backlog 2500',    'backlog',          2500

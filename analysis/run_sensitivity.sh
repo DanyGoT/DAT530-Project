@@ -15,14 +15,14 @@ SEEDS=${SEEDS:-"1 2 3"}
 RUNS=(
   "base        -                []"
   "pace        pace             0.62*1.1"
-  "hall_space  hall_space       36"
+  "hall_space  hall_space       84"
   "hall_buffer hall_buffer      24"
-  "wash_start  wash_start       12"
-  "short_run   short_run        28"
-  "change      change           23.1*1.2"
+  "wash_min    wash_min         2.2*1.2"
   "receipts    receipts_per_day 6.7*1.2"
-  "crew_L0     crew             [3 3 1 1]"
-  "crew_L1     crew             [2 4 1 1]"
+  "crew_L0     crew             [6 5 1 1]"
+  "crew_L1     crew             [5 6 1 1]"
+  "certified   certified        [4 1 0 0]"
+  "bundle      bundle           6*1.2"
 )
 
 for seed in $SEEDS; do

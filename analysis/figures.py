@@ -226,10 +226,11 @@ def table_baseline():
     if not runs:
         return
     keys = ["inspected", "per_hour", "busy", "busy_L0", "busy_L1", "busy_L2", "busy_L3",
-            "changes", "yard_queue", "unmet", "unmet_end", "waiting", "free_floor", "shipped", "minutes"]
+            "busy_cert", "fork_busy", "yard_hours", "gate", "yard_queue", "unmet", "unmet_end", "waiting",
+            "free_floor", "shipped", "minutes"]
     rows = []
     for k in keys:
-        x = np.array([getattr(r["Y"], k) for r in runs.values()], float)
+        x = np.array([getattr(r["Y"], k, np.nan) for r in runs.values()], float)
         m, h = ci95(x)
         rows.append((k, m, x.std(ddof=1) if len(x) > 1 else np.nan, m - h, m + h, len(x)))
     t = pd.DataFrame(rows, columns=["output", "mean", "sd", "ci_low", "ci_high", "n"])

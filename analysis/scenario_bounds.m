@@ -11,9 +11,6 @@ scenarios = {
   'crew8',       {'crew', [2 4 1 1]}
   'overtime',    {'shift', [7 17]*60}
   'lanes3',      {'wash_lanes', 3}
-  'run0',        {'short_run', 0}
-  'run46',       {'short_run', 46}
-  'shortlane',   {'short_lane', true}
   'auto_clean',  {'auto', {'Clean'}}
   'auto_finish', {'auto', {'Finish'}}
   'auto_both',   {'auto', {'Clean', 'Finish'}}

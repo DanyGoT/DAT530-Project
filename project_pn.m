@@ -109,10 +109,6 @@ disp(['Back from the workshops: ', int2str(timesfired('tRMachHall') + timesfired
 weekdays = sum(mod(0:P.days-1, 7) < 5);
 man_hours = sum(P.crew) * weekdays * diff(P.shift)/60;      % the whole crew, wash included
 disp(['Joints per man-hour: ', num2str(sum(n)/man_hours, 2), ' (KPI 4, now ~3.3)']);
-switches = sum(cellfun(@(k) timesfired(sprintf('tWToShort_%d', k)) + timesfired(sprintf('tWToLong_%d', k)), ...
-                       num2cell(1:P.wash_lanes)));
-disp(['Wash mobilized ', int2str(timesfired('tWMobilize')), ' times, ', int2str(switches), ...
-      ' long/short changeovers (hall data: ~5 a week)']);
 W = yard_work(P);
 work = weekdays * diff(P.shift);                             % shift minutes per forklift
 jobs = cellfun(@timesfired, W.name);

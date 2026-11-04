@@ -50,7 +50,6 @@ W = yard_work(P);
 global_info.lorry_job = containers.Map(W.name, W.lorry);   % loads or unloads a lorry
 global_info.next_pipe = 1;
 global_info.next_hall = 1;
-global_info.run = 0;                        % short joints sent in the yard's current run
 global_info.next_floor = 1;
 global_info.next_demand = 1;
 global_info.yard_out = zeros(0, 3);         % per hall joint the yard sends on: [time, received, order]

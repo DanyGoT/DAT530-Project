@@ -23,9 +23,7 @@ assert(on_floor + ntokens('pISpace') == P.hall_space, 'hall space not conserved'
 waiting = sum(cellfun(@ntokens, {'pYRoom', 'pIYRoom', 'pIRoom', 'pYW', 'pWRack', 'pWDone', 'pWI'}));
 assert(waiting == P.hall_buffer, 'credits not conserved');
 
-lanes = 1:P.wash_lanes;
-washed = sum(cellfun(@timesfired, [arrayfun(@(k) sprintf('tWLong_%d', k), lanes, 'UniformOutput', false), ...
-                                   arrayfun(@(k) sprintf('tWShort_%d', k), lanes, 'UniformOutput', false)]));
+washed = sum(cellfun(@timesfired, arrayfun(@(k) sprintf('tWash_%d', k), 1:P.wash_lanes, 'UniformOutput', false)));
 assert(washed > 0, 'nothing was washed');
 assert(timesfired('tWIn') == timesfired('tYLong') + timesfired('tYShort') - ntokens('pYW'), 'joints lost on the way to the wash');
 assert(timesfired('tIIn') + ntokens('pWI') + ntokens('pWDone') == washed, 'joints lost between wash and hall');

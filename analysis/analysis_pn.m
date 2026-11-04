@@ -4,7 +4,7 @@
 %
 % Invariants say what the net itself keeps constant, whatever the guards in
 % the processors decide: room on the hall floor, the credits in front of
-% the hall, and the state of each wash lane. GPenSIM's pinvariant lists them
+% the hall, and the forklifts. GPenSIM's pinvariant lists them
 % all; below, the ones the model relies on are checked one by one.
 % A coverability tree and mincyctime don't fit this net: the arrival and
 % ticket clocks make it unbounded, and it isn't an event graph.
@@ -44,10 +44,6 @@ invariants = {
   'ticket clock',  {'pDClock'}
   'forklifts',     {'pYFork', 'pCFork'}
 };
-for k = 1:P.wash_lanes
-    invariants(end+1, :) = {sprintf('wash lane %d set-up', k), {sprintf('pWLong_%d', k), sprintf('pWShort_%d', k)}};
-    invariants(end+1, :) = {sprintf('wash lane %d on/off', k), {'pWOff', sprintf('pWReady_%d', k)}};
-end
 disp(' '); disp('Invariants the model relies on:');
 for k = 1:size(invariants, 1)
     y = double(ismember(places, invariants{k, 2}))';
@@ -57,10 +53,10 @@ end
 
 % Crew bound (crew_bound.m). Work that needs level L can only be done by
 % people of level L or higher, so for each L: joints/week <= (their minutes a
-% week) / (minutes of work per joint at level L or higher). One person mans
-% both wash lanes; scrapped joints skip steps. The L0 line is the whole
-% crew. Changeovers, mobilizing and walking are left out, so the real number
-% is lower.
+% week) / (minutes of work per joint at level L or higher). The wash is
+% P.wash_min manned minutes a joint; scrapped joints skip steps. The L0 line
+% is the whole crew. Yard (forklift) work is left out, so the real number is
+% lower.
 week = 5 * diff(P.shift);                                   % shift minutes a week, per person
 B = crew_bound(P);                                          % the work per joint: see crew_bound
 disp(' '); disp('Crew bound (joints a week):');
@@ -78,7 +74,8 @@ fprintf('  The wash can wash at most %.0f a week (%d lanes, %.1f manned min a jo
 % person at each step. So the traps are found on a skeleton with one
 % transition per hall step (crew [0 0 0 1]) and one wash lane. A step's
 % transitions all have the same input and output places, so the skeleton
-% has the same traps; lane 2 is a copy of lane 1. Result (2026-10-30, 579 s):
+% has the same traps; lane 2 is a copy of lane 1. Result (2026-10-30, 579 s,
+% before the yards and the simple wash):
 % the supports of the 6 invariants above, which are marked at the start and
 % so stay marked, and the sinks {pDShipped} and {pYScrap}, which keep every
 % shipped or scrapped joint. Siphons (siphons_minimal) and T-invariants

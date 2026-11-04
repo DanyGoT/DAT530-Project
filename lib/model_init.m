@@ -30,3 +30,5 @@ global_info.hall_out = zeros(0, 3);         % per joint leaving the hall: [time,
 global_info.clear_at = nan;                 % drain test: when the hall was clear (P.stop_clear)
 global_info.STOP_AT = P.days*1440;
 global_info.DELTA_TIME = 0.25;  % 15 s
+global_info.NO_COLORMAP = true; % no colour history: ~6x faster, same results (patch in
+                                % gpensim/Firing-Transition/firing_complete_one.m)

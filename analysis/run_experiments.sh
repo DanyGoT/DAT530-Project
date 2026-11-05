@@ -63,6 +63,13 @@ RUNS=(
   "x20_grow150| 7 | 1 2 3 | 'halls', 2, 'crew', [8 8 2 2], 'certified', [3 1 0 0], 'receipts_per_day', 6.7*1.5, 'tickets_per_day', 4.1*1.5"
   "x20_grow200| 7 | 1 2 3 | 'halls', 2, 'crew', [8 8 2 2], 'certified', [3 1 0 0], 'receipts_per_day', 6.7*2, 'tickets_per_day', 4.1*2"
 
+  # The second yard: share of receipts unloaded at Coop (0.2 in params.m), and
+  # one helper at a lorry instead of two, against base3 with the same seeds.
+  "coop0      | 3 | 1 2 3 | 'coop_in', 0"
+  "coop40     | 3 | 1 2 3 | 'coop_in', 0.4"
+  "coop60     | 3 | 1 2 3 | 'coop_in', 0.6"
+  "help1      | 3 | 1 2 3 | 'lorry_helpers', 1"
+
   # Departure: rig-ready stock at the start (300 in params.m) against unmet demand.
   "stock0     | 3 | 1 2 3 4 5 | 'stock', 0"
   "stock100   | 3 | 1 2 3 4 5 | 'stock', 100"
@@ -73,7 +80,7 @@ RUNS=(
 )
 DEFAULT="base28 base base3 crew2021 fewer promote auto_both auto_wash overtime floor50 floor90 buffer10 buffer30
 fx_0000 fx_1000 fx_0100 fx_1100 fx_0010 fx_1010 fx_0110 fx_1110 fx_0001 fx_1001 fx_0101 fx_1101 fx_0011 fx_1011 fx_0111 fx_1111 cert2
-grow125 grow150 grow200 x20 x20_grow150 x20_grow200 stock0 stock100 stock1000"
+coop0 coop40 coop60 help1 grow125 grow150 grow200 x20 x20_grow150 x20_grow200 stock0 stock100 stock1000"
 DEFAULT=${DEFAULT//$'\n'/ }
 
 trim() { local x; read -r x <<< "$1"; printf '%s' "$x"; }   # no word splitting or globbing

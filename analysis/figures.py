@@ -341,7 +341,7 @@ def f7_scenarios():
     for i, (t, lab) in enumerate(rows[::-1]):
         m, h = paired(t, "base3")
         a.errorbar(m, i, xerr=h, fmt="D", color=BLUE, ms=4, capsize=2, lw=1.2)
-        a.text(m, i + 0.25, f"{m:+.0f}%", ha="center", va="bottom", fontsize=6.5, color=MUTED)
+        a.text(m, i + 0.25, f"{m:+.1f}%" if abs(m) < 1 else f"{m:+.0f}%", ha="center", va="bottom", fontsize=6.5, color=MUTED)
     a.axvline(0, color=MUTED, lw=0.8)
     a.set_yticks(range(len(rows)), [l for _, l in rows[::-1]])
     a.set(xlabel="Joints inspected, change from baseline (%)",
@@ -383,7 +383,49 @@ def f8_growth():
     save(fig, "f8_growth.pdf")
 
 
+def f9_hours():
+    """F9: where the paid person-hours go (costs.m), and what they produce.
+    a: the crew and shift scenarios; b: the second yard. Each against the
+    baseline runs with the same seeds."""
+    path = os.path.join(EXP, "costs.csv")
+    if not os.path.exists(path):
+        return print("skip F9: no costs.csv (run costs.m)")
+    c = pd.read_csv(path)
+    panels = [("a  Crew and shift", [("base3", "Baseline"), ("crew2021", "2021 crew"), ("promote", "One L0 → L1"),
+                                     ("auto_both", "Clean, Finish automated"), ("overtime", "Shift 07–17")]),
+              ("b  The second yard", [("coop0", "None at Coop"), ("base3", "20% at Coop (baseline)"),
+                                      ("coop40", "40% at Coop"), ("coop60", "60% at Coop"),
+                                      ("help1", "One helper at a lorry")])]
+    parts = [("hall_h", "Hall", BLUE), ("wash_h", "Wash", AQUA), ("yard_h", "Yard and lorries", ORANGE),
+             ("idle_h", "Idle", GRID)]
+    fig, axes = plt.subplots(2, 1, figsize=(W, 4.6), gridspec_kw={"hspace": 0.55})
+    for ax, (title, rows) in zip(axes, panels):
+        tags = [t for t, _ in rows if t != "base3"]
+        seeds = set(c.seed[c.tag.isin(tags)])        # the baseline with the same seeds
+        rows = [(t, l) for t, l in rows if (c.tag == t).any()]
+        if len(rows) < 2:
+            ax.set_visible(False)
+            continue
+        m = [c[(c.tag == t) & c.seed.isin(seeds)].mean(numeric_only=True) for t, _ in rows]
+        y = np.arange(len(rows))
+        left = np.zeros(len(rows))
+        for key, lab, col in parts:
+            v = np.array([r[key] for r in m])
+            ax.barh(y, v, left=left, height=0.62, color=col, edgecolor="white", lw=0.8, label=lab)
+            left += v
+        for i, r in enumerate(m):
+            ax.text(left[i] + 8, i, f"{r.inspected:.0f} inspected, {r.shipped:.0f} shipped",
+                    va="center", fontsize=6.5, color=MUTED)
+        ax.set_yticks(y, [l for _, l in rows])
+        ax.invert_yaxis()
+        ax.set_xlim(0, 1.45 * left.max())
+        ax.grid(axis="y", visible=False)
+        ax.set(title=f"{title} ({len(seeds)} seeds)", xlabel="Person-hours a week")
+    axes[0].legend(loc="lower right", ncol=4, bbox_to_anchor=(1, 1.02), handlelength=1.2, columnspacing=1)
+    save(fig, "f9_hours.pdf")
+
+
 if __name__ == "__main__":
     for f in [f1_inputs, f2_throughput, f3_week, f4_crew, table_baseline,
-              f5_modules, f6_factorial, f7_scenarios, f8_growth]:
+              f5_modules, f6_factorial, f7_scenarios, f8_growth, f9_hours]:
         f()

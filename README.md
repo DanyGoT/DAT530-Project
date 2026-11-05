@@ -94,7 +94,8 @@ A connector's places are named by the two modules' letters: `pAYLong`
   driver free, the hall and the wash leave the certified workers alone for
   the next step, and when a lorry lacks helpers, L0 and L1 too, so the lorry
   crew gathers as people come free. At Main, feeding the wash goes before unloading and
-  storing; other forklift jobs take turns. Helpers at a lorry are L0/L1
+  storing, and so does unloading the lorry from Coop when a hall waits for a joint
+  on it; other forklift jobs (shipping) take turns. Helpers at a lorry are L0/L1
   without a certificate first. (No GPenSIM priorities: setting any makes GPenSIM try every
   transition in a fixed order, and the hall's dispatch would change.)
   - Hall bundles at Coop are fetched to Main by lorry when they are within
@@ -125,8 +126,9 @@ A connector's places are named by the two modules' letters: `pAYLong`
 - **The hall** is an open floor joints roll through in order, with room for
   `P.hall_space` joints. The 25 tasks of the 2021 report are grouped by level
   into 5 steps (`P.steps`): Clean (L0), Inspect (L1), Check (L2), UT (L3),
-  Finish (L0). Task times are the report's times x `P.pace`, calibrated
-  before the yards were added (~800 inspected a week by 7 people). Whoever in the
+  Finish (L0). Task times are the report's times x `P.pace` = 0.92,
+  calibrated to the data's median of 803 inspected a week with the 12 people
+  and the yards. Whoever in the
   crew is free and has the level does the next step on a joint; each step has
   one transition per qualified person, so several joints can be at the same
   step at once.

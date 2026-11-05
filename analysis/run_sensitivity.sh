@@ -14,7 +14,7 @@ SEEDS=${SEEDS:-"1 2 3"}
 # tag  field (- for none)  value (a MATLAB expression); about +20%, crew +1 person
 RUNS=(
   "base        -                []"
-  "pace        pace             0.62*1.1"
+  "pace        pace             0.92*1.1"
   "hall_space  hall_space       84"
   "hall_buffer hall_buffer      24"
   "wash_min    wash_min         2.2*1.2"

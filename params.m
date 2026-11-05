@@ -78,11 +78,11 @@ P.crew = [5 5 1 1];               % people per level L0-L3, one pool for hall, w
 P.certified = [2 1 0 0];          % of those, how many hold a forklift certificate: 2-4 people
                                   % do forklift work (the company, 2026-11-04); 3 made up
 % The 2021 task times add up to 25 min of work per joint; the real work goes
-% faster. Calibrated to the data's median of ~800 inspected a week with this
-% crew (2-day probe at pace 0.73: ~690 a week, crew ~95% busy). That is ~2.9
-% joints per man-hour, wash included; the company's KPI of ~3.3 would need
-% fewer people for the same output.
-P.pace = 0.62;                    % task time = 2021 time x pace
+% a little faster. Calibrated to the data's median of 803 inspected a week
+% (§5) with this crew, yard work included: one-week runs, seeds 1-5, gave
+% 1031 a week at pace 0.62, 919 at 0.80, 870 at 0.85 (2026-11-05, 51433c4);
+% 0.92 is the straight line through the last two.
+P.pace = 0.92;                    % task time = 2021 time x pace
 % Steps: the 25 tasks of the 2021 report (Appendix A), grouped by level into
 % 5 steps in hall order, so each step needs the level its tasks need (a higher
 % level can do lower work). L0 work comes before and after the inspection, so

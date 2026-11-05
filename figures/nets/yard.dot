@@ -1,34 +1,76 @@
-// Yard module (modules/yard/yard_pdf.m)
-// Circles: places. Bars: transitions, blue = port.
-// Tokens shown: pYRoom = P.hall_buffer. pYLong, pYShort (backlog) and
-// pYReady (stock) start from data.
+// Yard module, made by analysis/net_dot.m from yard_pdf.m.
 digraph Yard {
-  rankdir=LR; nodesep=0.3; ranksep=0.9; forcelabels=true;
+  rankdir=LR; nodesep=0.3; ranksep=0.8; forcelabels=true;
   label="Yard"; labelloc=t; fontname="Helvetica"; fontsize=14;
   node [fontname="Helvetica", fontsize=10, label=""];
   edge [arrowsize=0.6, penwidth=0.8];
-
-  node [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42,
-        color="#1f5fa8", fillcolor="#1f5fa8"];
-  { rank=min;
-    tYInLong [xlabel="tYInLong"]; tYInShort [xlabel="tYInShort"]; tYRoom [xlabel="tYRoom"];
-    tYInBypass [xlabel="tYInBypass"]; tYInOk [xlabel="tYInOk"]; tYInRepaired [xlabel="tYInRepaired"];
-    tYOrder [xlabel="tYOrder"]; tYInScrap [xlabel="tYInScrap"]; }
-  { rank=max; tYLong [xlabel="tYLong"]; tYShort [xlabel="tYShort"]; tYShip [xlabel="tYShip"]; }
-
-  node [shape=circle, fixedsize=true, width=0.32, style="", color=black, fillcolor=white];
-  pYLong  [xlabel="pYLong"];
-  pYShort [xlabel="pYShort"];
-  pYRoom  [xlabel="pYRoom", label="20"];
-  pYReady [xlabel="pYReady"];
-  pYOrder [xlabel="pYOrder"];
-  pYScrap [xlabel="pYScrap"];
-
-  tYInLong -> pYLong;  tYInShort -> pYShort;  tYRoom -> pYRoom;
-  tYInBypass -> pYReady;  tYInOk -> pYReady;  tYInRepaired -> pYReady;
-  tYOrder -> pYOrder;  tYInScrap -> pYScrap;
-
-  pYLong -> tYLong;  pYRoom -> tYLong;
-  pYShort -> tYShort;  pYRoom -> tYShort;
-  pYReady -> tYShip;  pYOrder -> tYShip;
+  "tYFetch" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#222222", fillcolor="#222222", xlabel="tYFetch"];
+  "tYForkToCoop" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#222222", fillcolor="#222222", xlabel="tYForkToCoop"];
+  "tYForkToMain" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#222222", fillcolor="#222222", xlabel="tYForkToMain"];
+  "tYFromCoopLong" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#222222", fillcolor="#222222", xlabel="tYFromCoopLong"];
+  "tYFromCoopShort" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#222222", fillcolor="#222222", xlabel="tYFromCoopShort"];
+  "tYInBypass" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInBypass"];
+  "tYInCBypass" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInCBypass"];
+  "tYInCHall" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInCHall"];
+  "tYInLong" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInLong"];
+  "tYInOk" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInOk"];
+  "tYInOkCoop" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInOkCoop"];
+  "tYInRepaired" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInRepaired"];
+  "tYInScrap" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInScrap"];
+  "tYInShort" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYInShort"];
+  "tYLong" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYLong"];
+  "tYOrder" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYOrder"];
+  "tYOrderCoop" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYOrderCoop"];
+  "tYRoom" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYRoom"];
+  "tYShip" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYShip"];
+  "tYShipCoop" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYShipCoop"];
+  "tYShort" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#1f5fa8", fillcolor="#1f5fa8", xlabel="tYShort"];
+  "tYStoreCoop" [shape=box, style=filled, fixedsize=true, width=0.08, height=0.42, color="#222222", fillcolor="#222222", xlabel="tYStoreCoop"];
+  { rank=min; "tYInLong"; "tYInShort"; "tYInBypass"; "tYInOk"; "tYInOkCoop"; "tYInScrap"; "tYInRepaired"; "tYInCHall"; "tYInCBypass"; "tYRoom"; "tYOrder"; "tYOrderCoop";  }
+  { rank=max; "tYLong"; "tYShort"; "tYShip"; "tYShipCoop";  }
+  "pYLong" [shape=circle, fixedsize=true, width=0.36, xlabel="pYLong", label="235"];
+  "pYShort" [shape=circle, fixedsize=true, width=0.36, xlabel="pYShort", label="123"];
+  "pYReady" [shape=circle, fixedsize=true, width=0.36, xlabel="pYReady", label="255"];
+  "pYScrap" [shape=circle, fixedsize=true, width=0.36, xlabel="pYScrap", label=""];
+  "pYRoom" [shape=circle, fixedsize=true, width=0.36, xlabel="pYRoom", label="20"];
+  "pYOrder" [shape=circle, fixedsize=true, width=0.36, xlabel="pYOrder", label=""];
+  "pYFork" [shape=circle, fixedsize=true, width=0.36, xlabel="pYFork", label="2"];
+  "pCHall" [shape=circle, fixedsize=true, width=0.36, xlabel="pCHall", label="303"];
+  "pCReady" [shape=circle, fixedsize=true, width=0.36, xlabel="pCReady", label="45"];
+  "pCOrder" [shape=circle, fixedsize=true, width=0.36, xlabel="pCOrder", label=""];
+  "pCFork" [shape=circle, fixedsize=true, width=0.36, xlabel="pCFork", label=""];
+  "pYToMain" [shape=circle, fixedsize=true, width=0.36, xlabel="pYToMain", label=""];
+  "pYToCoop" [shape=circle, fixedsize=true, width=0.36, xlabel="pYToCoop", label=""];
+  "tYInLong" -> "pYLong";
+  "tYInShort" -> "pYShort";
+  "tYInBypass" -> "pYReady";
+  "tYInOk" -> "pYReady";
+  "tYInScrap" -> "pYScrap";
+  "tYInRepaired" -> "pYReady";
+  "tYInOkCoop" -> "pYToCoop";
+  "pYToCoop" -> "tYStoreCoop";
+  "tYStoreCoop" -> "pCReady";
+  "tYInCHall" -> "pCHall";
+  "tYInCBypass" -> "pCReady";
+  "pCHall" -> "tYFetch";
+  "tYFetch" -> "pYToMain";
+  "pYToMain" -> "tYFromCoopLong";
+  "tYFromCoopLong" -> "pYLong";
+  "pYToMain" -> "tYFromCoopShort";
+  "tYFromCoopShort" -> "pYShort";
+  "tYOrder" -> "pYOrder";
+  "tYOrderCoop" -> "pCOrder";
+  "pYOrder" -> "tYShip";
+  "pYReady" -> "tYShip";
+  "pCOrder" -> "tYShipCoop";
+  "pCReady" -> "tYShipCoop";
+  "pYFork" -> "tYForkToCoop";
+  "tYForkToCoop" -> "pCFork";
+  "pCFork" -> "tYForkToMain";
+  "tYForkToMain" -> "pYFork";
+  "tYRoom" -> "pYRoom";
+  "pYLong" -> "tYLong";
+  "pYRoom" -> "tYLong";
+  "pYShort" -> "tYShort";
+  "pYRoom" -> "tYShort";
 }

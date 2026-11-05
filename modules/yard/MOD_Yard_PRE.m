@@ -24,9 +24,9 @@ switch t
     case {'tYLong', 'tYShort'}                  % hall h's next joint, if it is at Main
         fire = next_hall_is(lower(t(3:end)), h);
     case {'tYFromCoopLong', 'tYFromCoopShort'}  % the lorry from Coop is here
-        q = global_info.lorry;
+        q = global_info.lorry;                  % (first, if a hall waits for a joint on it)
         fire = not(isempty(q)) && q(1, 2) + P.lorry_drive <= current_time() ...
-               && q(1, 3) == strcmp(t, 'tYFromCoopLong') && not(main_urgent());
+               && q(1, 3) == strcmp(t, 'tYFromCoopLong') && (on_lorry() || not(main_urgent()));
     case 'tYStoreCoop'                          % the lorry from the hall is at Coop
         q = global_info.coop_q;
         fire = not(isempty(q)) && q(1) + P.lorry_drive <= current_time();
@@ -74,27 +74,43 @@ end
 
 
 function yes = main_urgent()
-% At Main, a wash waits for its next joint (it is there and there is a
-% credit): feeding it goes before unloading and storing. Other forklift jobs
-% (shipping, unloading) take turns.
+% At Main, a wash has a credit and waits for its next joint, which is in the
+% yard or on the lorry from Coop: feeding it, or unloading that lorry, goes
+% before unloading and storing. Other forklift jobs (shipping) take turns.
 global global_info
 yes = false;
 for h = 1:global_info.P.halls
     yes = yes || (ntokens(hall_name('pYRoom', h)) > 0 ...
-                  && (next_hall_is('long', h) || next_hall_is('short', h)));
+                  && (next_hall_is('long', h) || next_hall_is('short', h) || on_lorry(h)));
 end
 
 
 function yes = next_hall_is(len, h)
 % Hall h's next joint has this length and is at Main: arrived there, or
-% fetched from Coop.
+% fetched from Coop, and the yard has a joint of that length to feed (one
+% that has arrived may still be on its lorry at the gate).
 global global_info
 i = next_joint(h);
 yes = i > 0;
 if not(yes), return, end
 j = global_info.hall(i);
 here = (j.coop && global_info.cstate(j.id) == 3) || (not(j.coop) && j.t <= current_time());
-yes = here && strcmp(j.len, len);
+yes = here && strcmp(j.len, len) && ntokens(['pY', upper(len(1)), len(2:end)]) > 0;
+
+
+function yes = on_lorry(H)
+% A hall in H (all by default) has a credit and its next joint is on a lorry
+% from Coop.
+global global_info
+if nargin == 0, H = 1:global_info.P.halls; end
+yes = false;
+for h = H
+    i = next_joint(h);
+    if i > 0 && ntokens(hall_name('pYRoom', h)) > 0
+        j = global_info.hall(i);
+        yes = yes || (j.coop && global_info.cstate(j.id) == 2);
+    end
+end
 
 
 function k = fetchable()

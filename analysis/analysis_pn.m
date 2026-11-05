@@ -26,6 +26,8 @@ pns = pnstruct(pdfs);
 dyn = model_dyn(P, pns);
 
 pinvariant(pns);
+pnclass(pns);                   % ordinary or generalised, state machine, event graph, SCCs;
+                                % it says untimed: the firing times come with initialdynamics
 
 % C(t, p): tokens transition t adds to place p. y is an invariant if C*y = 0,
 % and then y'*m stays at its value in m0.

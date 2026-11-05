@@ -20,6 +20,7 @@ Arrival ──▶ Yard ──▶ Washing ──▶ Inspection hall ──▶ Yar
 | `modules/<module>/` | one Petri module each: its PDF, `MOD_<Name>_PRE.m` and `MOD_<Name>_POST.m` |
 | `imc/` | the inter-modular connectors: the places between two modules, and arcs to their ports |
 | `COMMON_PRE.m` | the interface: what each port takes and which colours it hands on |
+| `trym_test/` | Trym's scenarios, event-driven modules/connectors, helpers, tests and saved results; see [its README](trym_test/README.md) |
 | `lib/` | joint, demand and start-state generators, the hall step list, run setup, token helpers |
 | `tests/` | one test per module or group of modules, and stub connectors for the ports a test leaves open |
 | `analysis/` | `analysis_pn.m`: P-invariants of the whole net and an upper bound on what the crew can inspect; no simulation |
@@ -129,3 +130,217 @@ analysis_pn                     % invariants and crew bound, in seconds
 
 Change `params.m`, or set fields after `P = params();` in `project_pn.m`
 (e.g. `P.crew = [3 2 0 2];` for the 2021 report's crew).
+
+### Finite lifecycle experiments (no GPenSIM required)
+
+All new experiments now live in `trym_test/`. The original `modules/`, `imc/`,
+`lib/`, `tests/`, `params.m` and `project_pn.m` remain in their original locations.
+The new runner is split by process under `trym_test/modules/`; its connectors
+are under `trym_test/imc/` and its event engine is under `trym_test/lib/`.
+This matches the class folder layout, but remains event-driven MATLAB,
+not GPenSIM PDFs. Shared parameters and order generation still come from
+the original project. See [the structure and entry points](trym_test/README.md).
+
+`scenario_flow` is a separate event-driven MATLAB runner, not a replacement
+for the Petri net. It reads `params.m` and reuses `new_order` for order sizes,
+lengths, clustered defects and per-order repair durations. No random traffic,
+old workshop stock or customer demand is added beyond the specified population.
+All these pipes require washing and inspection (the bypass probability is
+deliberately ignored). The final order in each population is truncated to
+keep the exact total.
+
+From MATLAB (not PowerShell):
+
+```matlab
+cd('C:\Users\Trym\DAT_530\DAT530-Project\trym_test')
+scenario_flow                         % 100 pipes: 50 waiting, 50 arriving
+scenario_flow('baseline', 800)        % 800 pipes: 400 waiting, 400 arriving
+scenario_flow('all', 100)             % seven one-change-at-a-time experiments
+results = scenario_flow({'baseline','promote'}, 800);
+test_flow                            % small automated lifecycle/resource tests
+```
+
+The entry point adds the project subfolders to MATLAB's path automatically.
+Change `flow_config.m` for logistics/equipment assumptions; change `params.m`
+for the default crew, step times/levels, shift and repairs. For arbitrary
+combinations without plotting/saving:
+
+```matlab
+trym_test_setup()
+P = params();
+C = flow_config(P);
+C.total = 800; C.initial = 400;
+P.crew = [3 3 3 3];
+C.certified = [1 1 2 2];             % counts within each level, separate from competence
+C.forklifts = 2;
+P.wash_lanes = 4;
+C.step_machines(6) = 2;             % e.g. two simultaneous UT jobs
+R = run_flow(P, C);
+print_flow(R, 'My experiment');
+```
+
+**Flow and resource rules**
+
+- Initial pipes are already unloaded in the dirty yard. Incoming orders arrive
+  from Monday 08:00, one hour apart by default. Unloading is per pipe, with
+  three shared workers including one certified forklift driver.
+- Yard-to-wash, wash-to-hall, hall-to-yard and repair-return movements each
+  need one certified worker and a forklift. These are the same individual
+  workers who inspect and wash: a worker cannot do two jobs simultaneously.
+- Washing uses one worker per active lane, unlike the Petri net's single
+  attendant across lanes. Each lane needs mobilization at its first wash
+  of a shift, changeover on a length change and staffed demobilization when
+  finished or at shift end. Workers are released between lane jobs; they
+  do not remain assigned while a lane is idle. No minimum ten-pipe startup
+  threshold applies, so finite batches can always drain.
+- Washed pipes retain wash-floor space until their transfer into the
+  inspection hall finishes. A pipe reserves hall space when that transfer
+  starts, and retains it **until its hall-to-yard movement finishes**.
+  Inspection cannot start on new pipes if those positions remain occupied.
+- Every pipe follows `P.steps` in order, with one qualified worker per
+  step, subject to a configurable simultaneous-machine limit for each step.
+  Higher levels may do lower-level work. Scrap detection/skipping follows
+  the step table, and remaining non-skipped work is completed before removal.
+- Repair pipes first move to the yard, then use an external workshop and
+  transport (no shared crew/forklift during the external lead time).
+  They require a staffed return movement. Fixed per-pipe decisions determine
+  whether they must pass through inspection again, without washing again.
+- An order is released for loading only when **all** its non-scrap pipes are
+  ready in the yard. Each pipe needs a driver/forklift to load. After all
+  are loaded, that order departs after the configured truck delay.
+  Scrap stays in the scrap yard; scrap-only orders do not need a truck.
+- Tasks requiring staff must fit entirely inside a weekday shift. Repairs,
+  incoming trucks and customer departure delays may span nights/weekends.
+  Priority is lane shutdown, hall clearance, repair returns, hall admission,
+  later inspection steps, washing, yard feed, unloading, then loading.
+  This is a fixed policy, not an optimal workforce scheduler.
+- Random inputs (including scrap discovery and re-inspection) are drawn
+  before scheduling, so changing only staffing/equipment preserves the input
+  workload. Promotions keep headcount fixed. Default machine limits, movements,
+  certificates and transport times are **experimental assumptions**, not
+  calibrated site measurements. Wash lanes are independently staffed lanes,
+  not complete duplicates of the old washing unit.
+
+The seven experiments are baseline, more workers, one certified L1 promoted
+to L3, an extra forklift, extra wash lanes, doubled inspection-machine counts,
+and doubled hall floor capacity. Compare first-pass completion, inspection
+queue waits and occupancy as well as total departure time: long external
+repairs can dominate the latter and hide a hall bottleneck.
+
+Reports include stage times, step work/queue time and final pipe conservation.
+`flow_results/latest.mat` contains per-pipe inputs, order membership, individual
+worker/pipe IDs in the event log, and queue histories. CSV summaries and plots
+are also produced. Matching output filenames are overwritten on the next run;
+the generated directory is ignored by git. Times are minutes internally and
+elapsed calendar days in reports/plots. An unfinished run warns explicitly
+and reports `Complete = false`, rather than treating a time limit as success.
+Its event log also marks scheduled jobs beyond the horizon as `completed = false`;
+the stage report counts completed jobs only.
+
+### Isolating washing and inspection
+
+```matlab
+[results, summary] = scenario_process(15);   % small parallelism demonstration
+[results, summary] = scenario_process(100);  % eight crew mixes, two wash capacities
+test_process
+```
+
+This uses the same event engine but sets `C.process_only = true`. Every pipe
+starts waiting for washing, and stops as OK, ready for repair, or scrap after
+inspection. There are no arrivals, unloading, forklifts, movement delays,
+actual repairs, re-inspections, order-release constraints or departures.
+Hall and wash-floor space still limit work in progress. Finished inspection
+pipes leave the floor immediately; this intentionally removes the movement
+bottleneck to examine processing alone.
+
+Inspection equipment limits are set to the number of pipes, allowing every
+qualified available worker to perform the same step on different pipes at
+once. Each pipe still follows `P.steps` in order, never has two simultaneous
+inspectors, and can change workers at any step. Higher levels can do
+lower-level inspection work. For this experiment all levels are also allowed
+to wash, overriding the old L0/L1-only wash pool; otherwise an all-L3 crew
+could not start washing.
+
+Crews are 3/6/15 L3-only workers, 3/6/12 mixed workers, the default seven,
+and seven with one L1 promoted to L3. Each is tested with the default washing
+lane count and twice that count. These are independently staffed lanes, not
+an unstaffed extra machine: setup, length changeovers and shutdown still take
+time and people. Extra lanes cannot guarantee faster inspection when those
+people are needed elsewhere. The existing later-step-first, lowest-qualified-
+worker-first dispatch policy is retained; it is not an optimal scheduler.
+All experiments use identical pre-generated pipes and outcomes.
+
+`summary` reports last washing and inspection completion in elapsed calendar
+hours, completion including lane shutdown, peak simultaneous inspectors and
+the three outcome counts. `flow_results/process.mat` preserves all event logs
+and `flow_results/process_summary.csv` stores the comparison; both are
+overwritten on rerun. The bar chart compares inspection completion, not long
+repair lead times. `P.pace` still scales the seconds in `P.steps`.
+
+The automated 15-pipe demonstration gives every pipe the same wash duration,
+15 wash lanes and 15 L3 workers, with no scrap. It verifies all 15 can work on
+each inspection step simultaneously and checks the exact total duration.
+The normal scenario retains the project's random lengths and outcomes, so
+washing releases pipes at different times and not all inspectors need peak
+at 15.
+
+`scenario_process` also plots pipes versus elapsed calendar days: cumulative
+completed inspections (all three outcomes) and pipes occupying the inspection
+hall, with a separate column for each washing capacity. To plot a saved run
+without simulating again:
+
+```matlab
+load(fullfile('flow_results', 'process.mat'), 'results')
+plot_process(results)
+```
+
+### Inspect and clear groups of 30
+
+```matlab
+[results, summary] = scenario_process(100, true, 15);
+[results, summary] = scenario_process(800, true, 15);
+test_process_batches
+```
+
+The second argument enables batch clearance; the third is the **minutes to
+move one entire group**, not minutes per pipe. The default assumption is 15
+minutes, adjustable through `C.batch_move_minutes` in `flow_config.m` or this
+argument. `C.batch_clearance` is otherwise false, preserving the original
+continuous process-only experiments and the full-lifecycle runner.
+
+Each group has `P.hall_space` pipes (30 by default). Washed pipes enter the
+hall as they become available, but inspection starts only after the whole
+group has entered. All pipes finish their required inspection steps before
+clearance starts. One available worker of any level from the shared crew
+moves the entire group; no forklift/certificate restriction applies in this
+experiment. That worker is unavailable for washing during the move. Every
+pipe retains its hall position until the movement finishes; no pipe from
+the next group can enter early. Washing can continue into its separate buffer
+while the hall is inspecting or clearing. The final smaller group is handled
+normally: 800 pipes makes 26 groups of 30 and one group of 20.
+
+This is deliberately a strict fill/inspect/clear policy, not a rolling
+replacement of individually completed pipes. The report distinguishes
+`InspectionDoneHours` from `YardReadyHours` and counts `GroupsMoved`.
+The bar chart compares yard readiness; the time-series chart adds cumulative
+pipes cleared to the yard alongside completed inspections and hall occupancy.
+OK, ready-for-repair and scrap counts become terminal only after removal.
+Actual repairs and customer shipping remain outside this experiment.
+
+Batch comparisons save to `flow_results/process_batches.mat` and
+`flow_results/process_batches_summary.csv`, leaving continuous-run results
+untouched. Plot saved batch results without rerunning:
+
+```matlab
+load(fullfile('flow_results', 'process_batches.mat'), 'results')
+plot_process(results)
+```
+
+The processing comparison continues until all pipes finish (subject to
+`C.max_days`), rather than stopping at `P.days = 7`. It still uses `P.seed`
+and the weekday `P.shift` from `params.m`. Summary columns `ElapsedDays` and
+`FinishDayTime` include nights/weekends; day 1 is Monday. `WorkingShifts`
+is elapsed available shift time divided by the daily shift length, while
+`ShiftsStarted` counts working days entered. Neither measures worker labour
+or utilization. Time-series graphs use elapsed calendar days; the bar chart
+and original hour columns retain hours.

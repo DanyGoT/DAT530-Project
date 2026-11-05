@@ -22,9 +22,9 @@ end
 switch t
     case {'tWIn', 'tWOut'}
         fire = 1;
-    case 'tWMobilize'
-        fire = ntokens('pWRack') >= P.wash_start && fits(P, P.mobilize + P.wash(1)) ...
-               && requestAR(P.wash_crew, 1);
+    case 'tWMobilize'               % also for the last few joints when nothing more is coming
+        fire = (ntokens('pWRack') >= P.wash_start || (ntokens('pWRack') > 0 && last_joints())) ...
+               && fits(P, P.mobilize + P.wash(1)) && requestAR(P.wash_crew, 1);
     case 'tWDemobilize'
         fire = ntokens('pWRack') == 0 || not(fits(P, max(P.wash)));
     case 'tWToLong'
@@ -50,6 +50,13 @@ function yes = fits(P, minutes)
 % Work of this length can start now and still leave time to demobilize.
 now = mod(current_time(), 1440);
 yes = in_shift(P) && now + minutes <= P.shift(2) - P.demobilize;
+
+
+function yes = last_joints()
+% Every hall joint has left the yard and reached the rack: no more will come
+% to make up P.wash_start, so wash the ones that are there.
+global global_info
+yes = global_info.next_hall > numel(global_info.hall) && ntokens('pYW') == 0;
 
 
 function yes = other_lane_short(lane)

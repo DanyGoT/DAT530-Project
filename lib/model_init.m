@@ -24,4 +24,5 @@ global_info.run = 0;                        % short joints sent in the yard's cu
 global_info.next_floor = 1;
 global_info.next_demand = 1;
 global_info.STOP_AT = P.days*1440;
+global_info.step_log = zeros(numel(S), 3);  % per hall step: [joints first_start last_end]
 global_info.DELTA_TIME = 0.25;  % 15 s

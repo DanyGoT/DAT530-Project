@@ -20,6 +20,9 @@ fire = 1;
 t = transition.name;
 
 switch t
+    case 'tDTicket'                 % asked every loop (clock token): skip idle time in batch runs
+        fast_forward();
+
     case {'tYLong', 'tYShort'}      % the yard's next hall joint gets its colours
         j = global_info.hall(global_info.next_hall);
         transition.new_color = {j.len, j.find, sprintf('order%d', j.order)};
@@ -39,7 +42,8 @@ switch t
 
     % Leaving the hall, by what inspection found.
     case 'tIOk'
-        [id, ~] = find_token('pIDone', @(tok) has_color(tok.color, 'ok'));
+        [id, c] = find_token('pIDone', @(tok) has_color(tok.color, 'ok'));
+        global_info.ok_repaired = id > 0 && has_color(c, 'repaired');   % for COMMON_POST
         [fire, transition] = pick(transition, id, {});
     case 'tIScrap'
         [id, ~] = find_token('pIDone', @(tok) has_color(tok.color, 'scrapped'));

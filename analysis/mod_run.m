@@ -10,7 +10,7 @@ function Y = mod_run(tag, seed, days, module, varargin)
 %   'repair'  Repair: only the joints at the workshops at the start, what
 %             comes back a day against the flow that put them there.
 % Changes as name/value pairs, as exp_run. Saves results/modules/
-% <tag>_s<seed>.mat and .csv. Each run starts a fresh MATLAB (run_modules.sh).
+% <tag>_s<seed>.mat and .csv.
 
 global global_info
 P = params();

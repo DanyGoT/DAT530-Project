@@ -1,7 +1,7 @@
 function png = for_hall(png, h)
 % A module's PDF as hall h's: every name through hall_name. The module keeps
-% its name (Inspection), so both halls run the same hooks (MOD_Inspection_PRE);
-% GPenSIM tells modules apart by number, and the hooks by hall_of.
+% its name (Inspection), so both halls run the same MOD_Inspection_PRE, which
+% finds the hall from the transition's name (hall_of).
 if h == 1, return, end
 png.set_of_Ps = hall_name(png.set_of_Ps, h);
 png.set_of_Ts = hall_name(png.set_of_Ts, h);

@@ -1,91 +1,23 @@
-% Plan:
-% %%%% Initial fase
-% Lage en forenklet modell, med hver av modulene for seg selv.
-% ^ Teste hver module. Trenger ikke å sette disse sammen helt enda.
-% Definere tokens, hva colors disse skal ha. 
-% Kanskje i den initielle modellen så bruker man typ "Dirty"-"Clean", "Inspected"-"Not Inspected". Altså flagg (altså ikke modellere flere nivåer av ting. For eksempel Type 1 feil, type 2 feils...)
-% 
-
-% TODO: Ta bilder av operasjonen for kontekst til rapport og visualisering
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%   Operasjonell avdeling
-% Input buffer
-% Cleaning buffer
-% Cleaning transition
-% Cleaning to inspection transition
-% Inspection buffer
-% Inspection transition
-% Inspection to output transition
-% Output buffer
-% 
-% Spyling, inspeksjon, reperasjon, personell, kompetanse (f.eks. NS1 sertifisert),
-% Queuing system, hvor lang tid ting tar (Blir en FIFO queue, med at rør i samme ordre er sammenhengende ved siden av hverandre),
-% 
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%   Logistikk avdeling
-% Input buffer
-% 
-% TODO: Fyll ut transitions og nodes
-%        
-% Trucker, interntransport (lastebil), lokasjoner, distanse, 
-% personell, kompetanse (f.eks. truckførerkurs)
-% Lasting på/av lastebil
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%   IT avdeling
-% 
-% TODO: Fyll ut transitions og nodes
-% 
-% Ordre inn
-% Blir denne som håndterer alt
-% Bestemmer antall rør, hvilke rør, når, prioritet, alt sånt
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%   Tokens
-% 
-% Definere typer og hva av colors disse skal ha
-% Typer vil sikkert være litt flytende i systemet da...
-% 
-% %%%%%%%
+% Main simulation file: one run of the pipe yard and its inspection hall.
 %
-% Pipe
-% | 
-% 
-% Personell
-% |
-% 
-% Kjøretøy
-% |
-% 
-% IT system greie
-% |
-% 
-% Kunde?
-% | 
-% 
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%   Main simulation file
+% Joints of drill pipe come back from the rigs by lorry and are unloaded at
+% one of two yards: Main, by the hall, or Coop. Most queue for the hall,
+% where they are washed and inspected, and leave as rig-ready stock, as
+% scrap, or for repair at an outside workshop; the rest go straight to
+% stock. Customer tickets take rig-ready joints out again. One crew of four
+% qualification levels (L0-L3) does the yard, the wash and the hall.
 %
-% Six Petri modules (modules/), joined by connectors (imc/) that hold the
-% places between them; tokens cross only through port transitions. The Yard
-% module holds both yards (Main and Coop), their forklifts and the lorries
-% between them.
-% Token = one joint (pipe). In the yard a joint's kind is the place it is in.
-% In the wash and the hall it carries colours: 'long'/'short', what inspection
-% will find ('ok', 'mach', 'hb' or 'scrap'), its order, and 'scrapped' once
-% inspection has found scrap. Parameters: params.m.
+% Six modules (Arrival, Yard, Washing, Inspection, Repair, Departure) and the
+% connectors between them (imc/). A token is one joint. In the yard a
+% joint's kind is the place it is in; in the wash and the hall it carries
+% its length, what inspection will find ('ok', 'mach', 'hb' or 'scrap'),
+% its order, and 'scrapped' once scrap is found. Parameters: params.m.
 
 clear all; clc;
 global global_info
 
 P = params();
-% P.crew = [3 2 0 2];          % try another crew (L0-L3), as in the 2021 report
+% P.crew = [6 4 0 2];          % a scenario is a change to P, here the crew (L0-L3)
 
 model_init(P);                  % arrivals, demand, start state and hall steps into global_info
 pns = pnstruct(model_pdfs(P));  % P.halls = 2: a second hall with its own wash

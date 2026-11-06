@@ -11,44 +11,56 @@ P = params();
 P.seed = 4;
 P.days = 2;
 model_init(P);
-pns = pnstruct({'yard_pdf', 'wash_pdf', 'inspection_pdf', ...
-                'imc_yard_wash', 'imc_wash_inspection', 'imc_inspection_yard', 'stub_hall'});
+pns = pnstruct({'yard_pdf', 'wash_pdf', 'inspection_pdf', 'imc_yard_wash', ...
+                'imc_wash_inspection', 'imc_inspection_yard', 'stub_hall'});
 assert_no_sources(pns);
 pni = initialdynamics(pns, model_dyn(P, pns));
 Sim_Results = gpensim(pni);
 
+fired = @(ts) sum(cellfun(@timesfired, ts));
+ntok  = @(ps) sum(cellfun(@ntokens, ps));
 S = global_info.S;
-on_floor = sum(cellfun(@ntokens, {S.place})) + ntokens('pIDone');
+lanes = arrayfun(@(k) sprintf('tWash_%d', k), 1:P.wash_lanes, 'UniformOutput', false);
+
+% Floor space and credits are conserved.
+on_floor = ntok({S.place}) + ntokens('pIDone');
 assert(on_floor + ntokens('pISpace') == P.hall_space, 'hall space not conserved');
-waiting = sum(cellfun(@ntokens, {'pYRoom', 'pIYRoom', 'pIRoom', 'pYW', 'pWRack', 'pWDone', 'pWI'}));
+waiting = ntok({'pYRoom', 'pIYRoom', 'pIRoom', 'pYW', 'pWRack', 'pWDone', 'pWI'});
 assert(waiting == P.hall_buffer, 'credits not conserved');
 
-washed = sum(cellfun(@timesfired, arrayfun(@(k) sprintf('tWash_%d', k), 1:P.wash_lanes, 'UniformOutput', false)));
+% No joint is lost from the yard through the wash and the hall and back.
+washed = fired(lanes);
+left   = fired({'tIOk', 'tIMach', 'tIHb', 'tIScrap'});
 assert(washed > 0, 'nothing was washed');
-assert(timesfired('tWIn') == timesfired('tYLong') + timesfired('tYShort') - ntokens('pYW'), 'joints lost on the way to the wash');
-assert(timesfired('tIIn') + ntokens('pWI') + ntokens('pWDone') == washed, 'joints lost between wash and hall');
-left = sum(cellfun(@timesfired, {'tIOk', 'tIMach', 'tIHb', 'tIScrap'}));
+assert(timesfired('tWIn') == fired({'tYLong', 'tYShort'}) - ntokens('pYW'), ...
+       'joints lost on the way to the wash');
+assert(timesfired('tIIn') + ntok({'pWI', 'pWDone'}) == washed, ...
+       'joints lost between wash and hall');
 assert(P.floor_start + timesfired('tIIn') == on_floor + left, 'joints lost in the hall');
-assert(timesfired('tIOk') == timesfired('tYInOk') + timesfired('tYInOkCoop') + ntokens('pIYOk') && ...
-       timesfired('tIScrap') == timesfired('tYInScrap') + ntokens('pIYScrap'), 'joints lost on the way to the yard');
+assert(timesfired('tIOk') == fired({'tYInOk', 'tYInOkCoop'}) + ntokens('pIYOk'), ...
+       'ok joints lost on the way to the yard');
+assert(timesfired('tIScrap') == timesfired('tYInScrap') + ntokens('pIYScrap'), ...
+       'scrap lost on the way to the yard');
 
+% The yard is colourless; joints for the workshops carry only their order.
 for p = {'pYLong', 'pYShort', 'pYReady', 'pYScrap', 'pCHall', 'pCReady', 'pYToCoop', 'pIYScrap'}
     bank = get_place(p{1}).token_bank;
-    if isempty(bank), continue, end
-    assert(all(cellfun(@isempty, {bank.color})), [p{1}, ' has coloured tokens']);
+    assert(isempty(bank) || all(cellfun(@isempty, {bank.color})), [p{1}, ' has coloured tokens']);
 end
 for p = {'pIRMach', 'pIRHb'}
     for tok = get_place(p{1}).token_bank
-        assert(numel(tok.color) == 1 && strncmp(tok.color{1}, 'order', 5), [p{1}, ' joint without just its order']);
+        just_order = isscalar(tok.color) && strncmp(tok.color{1}, 'order', 5);
+        assert(just_order, [p{1}, ' joint without just its order']);
     end
 end
 
+% Every scrap joint past the last step that finds scrap has been found.
 last = find([S.finds], 1, 'last');
 for p = [{S(last+1:end).place}, {'pIDone'}]
     for tok = get_place(p{1}).token_bank
         c = tok.color;
-        assert(not(any(strcmp(c, 'scrap'))) || any(strcmp(c, 'scrapped')), ...
-               ['unfound scrap in ', p{1}]);
+        assert(not(any(strcmp(c, 'scrap'))) || any(strcmp(c, 'scrapped')), ['unfound scrap in ', p{1}]);
     end
 end
+
 disp(['test_hall: ok (', int2str(washed), ' washed, ', int2str(left), ' through the hall)']);

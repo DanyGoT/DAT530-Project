@@ -76,9 +76,8 @@ fprintf('  The wash can wash at most %.0f a week (%d lanes, %.1f manned min a jo
 % person at each step. So the traps are found on a skeleton with one
 % transition per hall step (crew [0 0 0 1]) and one wash lane. A step's
 % transitions all have the same input and output places, so the skeleton
-% has the same traps; lane 2 is a copy of lane 1. Result (2026-10-30, 579 s,
-% before the yards and the simple wash):
-% the supports of the 6 invariants above, which are marked at the start and
+% has the same traps; lane 2 is a copy of lane 1. Result, on the earlier
+% nine-step net (about 10 min): the supports of the 6 invariants above, which are marked at the start and
 % so stay marked, and the sinks {pDShipped} and {pYScrap}, which keep every
 % shipped or scrapped joint. Siphons (siphons_minimal) and T-invariants
 % (tinvariant) don't finish within 15 min even on the skeleton.

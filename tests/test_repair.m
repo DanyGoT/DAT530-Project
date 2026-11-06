@@ -16,19 +16,26 @@ pni = initialdynamics(pns, model_dyn(P, pns));
 Sim_Results = gpensim(pni);
 
 ends = P.days*1440;
-names = {'Mach', 'Hb'};
 for w = 1:2
-    q = start{w};
-    due = q(:, 1) <= ends - 1;          % a minute's slack for the last firings
-    hall = timesfired(['tR', names{w}, 'Hall']);
-    ready = timesfired(['tR', names{w}, 'Ready']);
-    assert(hall + ready >= sum(due) && hall + ready <= sum(q(:, 1) <= ends), ...
-           [names{w}, ': joints left before or long after their repair was done']);
-    assert(ntokens(['pR', names{w}]) == size(global_info.workshop{w}, 1) && ...
-           ntokens(['pR', names{w}]) + hall + ready == size(q, 1), [names{w}, ': joints lost']);
-    assert(hall <= sum(q(:, 2) == 1) && ready <= sum(q(:, 2) == 0), [names{w}, ': wrong way back']);
+    name = {'Mach', 'Hb'};
+    name = name{w};
+    q = start{w};                         % [repair done, back through the hall]
+    hall  = timesfired(['tR', name, 'Hall']);
+    ready = timesfired(['tR', name, 'Ready']);
+    left  = hall + ready;
+    still = ntokens(['pR', name]);
+
+    % Left when the repair was done (a minute's slack for the last firings).
+    assert(left >= sum(q(:, 1) <= ends - 1) && left <= sum(q(:, 1) <= ends), ...
+           [name, ': joints left before or long after their repair was done']);
+    % None lost, and each went the way its row says.
+    assert(still == size(global_info.workshop{w}, 1) && still + left == size(q, 1), ...
+           [name, ': joints lost']);
+    assert(hall <= sum(q(:, 2) == 1) && ready <= sum(q(:, 2) == 0), [name, ': wrong way back']);
 end
-back = timesfired('tRMachHall') + timesfired('tRHbHall') + timesfired('tRMachReady') + timesfired('tRHbReady');
+
+back = sum(cellfun(@timesfired, {'tRMachHall', 'tRHbHall', 'tRMachReady', 'tRHbReady'}));
 assert(back > 0, 'nothing came back');
 assert(ntokens('pRI') + ntokens('pRYReady') == back, 'joints lost on the way back');
+
 disp(['test_repair: ok (', int2str(back), ' back, ', int2str(ntokens('pRI')), ' to the hall)']);

@@ -17,6 +17,8 @@ Sim_Results = gpensim(pni);
 
 fired = @(ts) sum(cellfun(@timesfired, ts));
 o = global_info.yard_out;                 % [time, received, order, hall]
+
+% Each hall inspects, and loses no joints or credits before its floor.
 for h = 1:2
     n = @(name) hall_name(name, h);
     done(h) = fired(n({'tIOk', 'tIMach', 'tIHb', 'tIScrap'}));
@@ -28,8 +30,12 @@ for h = 1:2
     credits = sum(cellfun(@ntokens, n({'pYRoom', 'pIYRoom', 'pIRoom'})));
     assert(credits + on_way == P.hall_buffer, sprintf('hall %d credits do not add up', h));
 end
+
+% Every order goes to one hall.
 for k = unique(o(:, 3))'
     assert(isscalar(unique(o(o(:, 3) == k, 4))), sprintf('order %d went to both halls', k));
 end
+
+orders = arrayfun(@(h) numel(unique(o(o(:, 4) == h, 3))), 1:2);
 disp(['test_halls: ok (inspected ', int2str(done(1)), ' in hall 1, ', int2str(done(2)), ' in hall 2; ', ...
-      int2str(numel(unique(o(o(:, 4) == 1, 3)))), ' and ', int2str(numel(unique(o(o(:, 4) == 2, 3)))), ' orders)']);
+      int2str(orders(1)), ' and ', int2str(orders(2)), ' orders)']);

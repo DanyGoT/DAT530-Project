@@ -9,8 +9,7 @@ function T = costs(tags)
 %
 % Orders completed needs each order's number of hall joints, which the runs
 % don't save; it is drawn again from the run's parameters and seed
-% (model_init), and checked against the orders the run saved. The figure
-% of the hours is F9 in figures.py.
+% (model_init), and checked against the orders the run saved.
 %
 %   costs({'base3', 'crew2021', 'overtime'})
 

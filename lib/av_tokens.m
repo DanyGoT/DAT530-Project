@@ -1,6 +1,6 @@
 function a = av_tokens(sim, places)
 % Time-weighted mean of the tokens in places (summed), over the whole run.
-% GPenSIM v11 has no avtokens; the log has a row per state change.
+% From extractp, which has a row for every change of the marking.
 global PN
 PN = sim;
 TM = extractp(places);

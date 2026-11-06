@@ -1,9 +1,7 @@
 function [fire, transition] = COMMON_PRE(transition)
-% The interface between the modules. GPenSIM only runs COMMON_PRE for port
-% transitions; a module's own transitions run its MOD_<module>_PRE alone.
-% Here: which joint an input port takes from its connector, and which colours
-% an output port gives it. When a port may fire is the module's business
-% (its MOD_<module>_PRE); both must say yes.
+% The ports between the modules: which joint an input port takes from its
+% connector, and which colours an output port gives it. When a port may fire
+% is decided by its module (MOD_<module>_PRE).
 %
 % Colours, as agreed between the modules:
 %   Yard -> Washing -> Inspection  len ('long'/'short'), find ('ok', 'mach',
@@ -13,9 +11,8 @@ function [fire, transition] = COMMON_PRE(transition)
 %                                  stores it at Main or Coop by order (to_coop)
 %   Repair -> Inspection           'ok' 'repaired'
 %   everything else                no colours (credits, orders, stock)
-% A port that takes a coloured joint picks it and gives its output exactly the
-% joint's colours (override), so a space or credit token taken in the same
-% firing never mixes its colours in.
+% A port that takes a joint gives its output exactly the joint's colours
+% (override), so a floor space or credit taken in the same firing adds none.
 % A hall's ports go by their name in hall 1 (t); h is the hall (hall_of).
 
 global global_info

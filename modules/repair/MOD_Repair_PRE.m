@@ -1,10 +1,8 @@
 function [fire, transition] = MOD_Repair_PRE(transition)
 % Joints at the workshops are colourless, so global_info.workshop{w} keeps
 % one row per joint: when its order's repair is done, and whether it goes
-% through the hall again. A joint coming in reads its order from the joint
-% the input port takes (COMMON_PRE takes the first). GPenSIM fires a
-% transition as soon as its pre-processors say yes, so the row can be added
-% here.
+% through the hall again. The row is added when the joint comes in, from
+% the order of the joint the input port takes (COMMON_PRE takes the first).
 
 switch transition.name
     case 'tRInMach'
